@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url"
 import { ConfigService } from "../ConfigService.js"
 import type { NetworkDataSource } from "./NetworkService.js"
 import type { GraphNetworkSubgraphResponse } from "./schemas/GraphNetwork.js"
+import type { SubgraphServiceSubgraphResponse } from "./schemas/SubgraphService.js"
 
 export class NetworkSubgraphError extends Data.TaggedError("NetworkSubgraphError")<{
   message: string
@@ -107,8 +108,32 @@ export const NetworkSubgraphlive = Layer.effect(
         }
       })
 
+    const getSubgraphService = () =>
+      Effect.gen(function*() {
+        const queryData = yield* NetworkSubgraph.loadQuery("SubgraphService")
+        const rawResult = (yield* query(queryData)) as SubgraphServiceSubgraphResponse
+        if (!rawResult.dataServices) {
+          throw new NetworkSubgraphError({
+            message: "Subgraph service not found"
+          })
+        }
+        return {
+          minimumProvisionTokens: BigInt(rawResult.dataServices[0].minimumProvisionTokens),
+          maximumProvisionTokens: BigInt(rawResult.dataServices[0].maximumProvisionTokens),
+          minimumVerifierCut: BigInt(rawResult.dataServices[0].minimumVerifierCut),
+          maximumVerifierCut: BigInt(rawResult.dataServices[0].maximumVerifierCut),
+          minimumThawingPeriod: BigInt(rawResult.dataServices[0].minimumThawingPeriod),
+          maximumThawingPeriod: BigInt(rawResult.dataServices[0].maximumThawingPeriod),
+          maxPOIStaleness: BigInt(rawResult.dataServices[0].maxPOIStaleness),
+          delegationRatio: BigInt(rawResult.dataServices[0].delegationRatio),
+          stakeToFeesRatio: BigInt(rawResult.dataServices[0].stakeToFeesRatio),
+          curationCut: BigInt(rawResult.dataServices[0].curationCut)
+        }
+      })
+
     return NetworkSubgraph.of({
-      getGraphNetwork
+      getGraphNetwork,
+      getSubgraphService
     })
   })
 )

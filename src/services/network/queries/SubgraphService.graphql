@@ -1,8 +1,15 @@
-query SubgraphService($id: ID!) {
-  dataServices (where: { id: $id }) {
-    id
+query SubgraphService {
+  dataServices {
     minimumProvisionTokens
     maximumProvisionTokens
+    minimumVerifierCut
+    maximumVerifierCut
+    minimumThawingPeriod
+    maximumThawingPeriod
+    maxPOIStaleness
+    delegationRatio
+    stakeToFeesRatio
+    curationCut
   }
 }
 

@@ -4,6 +4,7 @@ import { NetworkRPC } from "./NetworkRPC.js"
 import type { NetworkSubgraphError } from "./NetworkSubgraph.js"
 import { NetworkSubgraph } from "./NetworkSubgraph.js"
 import type { GraphNetwork } from "./schemas/GraphNetwork.js"
+import type { SubgraphService } from "./schemas/SubgraphService.js"
 
 export class DataMismatchError extends Data.TaggedError("DataMismatchError")<{
   message: string
@@ -22,6 +23,7 @@ export type NetworkServiceError = DataMismatchError | NetworkSubgraphError | Net
  */
 export abstract class NetworkDataSource {
   abstract getGraphNetwork(): Effect.Effect<GraphNetwork, NetworkServiceError>
+  abstract getSubgraphService(): Effect.Effect<SubgraphService, NetworkServiceError>
 }
 
 export class NetworkService extends Context.Tag("NetworkService")<NetworkService, NetworkDataSource>() {}
@@ -53,8 +55,30 @@ export const NetworkServiceLive = Layer.effect(
         return rpcData
       })
 
+    const getSubgraphService = () =>
+      Effect.gen(function*() {
+        const [rpcData, subgraphData] = yield* Effect.all(
+          [rpc.getSubgraphService(), subgraph.getSubgraphService()],
+          { concurrency: "unbounded" }
+        )
+
+        if (!deepEqual(rpcData, subgraphData)) {
+          return yield* Effect.fail(
+            new DataMismatchError({
+              message: "Data mismatch between RPC and Subgraph!",
+              method: "getSubgraphService",
+              rpcData,
+              subgraphData
+            })
+          )
+        }
+
+        return rpcData
+      })
+
     return NetworkService.of({
-      getGraphNetwork
+      getGraphNetwork,
+      getSubgraphService
     })
   })
 )

@@ -58,6 +58,24 @@
             "address": "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690",
             "proxy": "graph",
             "implementation": "0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E"
+        },
+        "SubgraphService": {
+            "address": "0xBEc49fA140aCaA83533fB00A2BB19bDdd0290f25",
+            "proxy": "transparent",
+            "proxyAdmin": "0x0CF67A3b6Edd8AC9F13BE276661371Bb699bDBb9",
+            "implementation": "0x720472c8ce72c2A2D711333e064ABD3E6BbEAdd3"
+        },
+        "DisputeManager": {
+            "address": "0x4EE6eCAD1c2Dae9f525404De8555724e3c35d07B",
+            "proxy": "transparent",
+            "proxyAdmin": "0xE91bfd2AfA045Ab2f47BEf565FC1deb7511D1AC6",
+            "implementation": "0x5c74c94173F05dA1720953407cbb920F3DF9f887"
+        },
+        "LegacyDisputeManager": {
+            "address": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE"
+        },
+        "LegacyServiceRegistry": {
+            "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
         }
     }
 }
