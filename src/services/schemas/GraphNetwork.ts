@@ -1,22 +1,12 @@
 import { Schema } from "@effect/schema"
 
 export const GraphNetwork = Schema.Struct({
-  id: Schema.String,
-  controller: Schema.String,
-  totalSupply: Schema.String,
-  totalDelegatedTokens: Schema.String,
-  totalTokensStaked: Schema.String,
-  totalQueryFees: Schema.String,
-  totalCuratorQueryFees: Schema.String,
-  networkGRTIssuance: Schema.String,
-  epochManager: Schema.String,
-  epochLength: Schema.Number,
-  currentEpoch: Schema.Number
+  maxThawingPeriod: Schema.BigInt
 })
 
-export const GetGraphNetworkResponse = Schema.Struct({
-  graphNetworks: Schema.Array(GraphNetwork)
+export const GraphNetworkSubgraphResponse = Schema.Struct({
+  graphNetworks: Schema.Array(Schema.Any)
 })
 
 export type GraphNetwork = Schema.Schema.Type<typeof GraphNetwork>
-export type GetGraphNetworkResponse = Schema.Schema.Type<typeof GetGraphNetworkResponse>
+export type GraphNetworkSubgraphResponse = Schema.Schema.Type<typeof GraphNetworkSubgraphResponse>

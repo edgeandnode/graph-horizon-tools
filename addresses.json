@@ -1,0 +1,63 @@
+{
+    "1337": {
+        "GraphPayments": {
+            "address": "0x0355B7B8cb128fA5692729Ab3AAa199C1753f726",
+            "proxy": "transparent",
+            "proxyAdmin": "0x625A692E96605c988192cd59563e5EB2f1E33C87",
+            "implementation": "0x46b142DD1E924FAb83eCc3c08e4D46E82f005e0E"
+        },
+        "PaymentsEscrow": {
+            "address": "0x202CCe504e04bEd6fC0521238dDf04Bc9E8E15aB",
+            "proxy": "transparent",
+            "proxyAdmin": "0x6C3d502f1a97d4470b881015b83D9Dd1062172e1",
+            "implementation": "0x4C2F7092C2aE51D986bEFEe378e50BD4dB99C901"
+        },
+        "L2Curation": {
+            "address": "0x59b670e9fA9D0A427751Af201D676719a970857b",
+            "proxy": "graph",
+            "implementation": "0x367761085BF3C12e5DA2Df99AC6E1a824612b8fb"
+        },
+        "L2GNS": {
+            "address": "0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f",
+            "proxy": "graph",
+            "implementation": "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44"
+        },
+        "SubgraphNFT": {
+            "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e"
+        },
+        "RewardsManager": {
+            "address": "0x9A676e781A523b5d0C0e43731313A708CB607508",
+            "proxy": "graph",
+            "implementation": "0x7A9Ec1d04904907De0ED7b6839CcdD59c3716AC9"
+        },
+        "HorizonStaking": {
+            "address": "0xc5a5C42992dECbae36851359345FE25997F5C42d",
+            "proxy": "graph",
+            "implementation": "0x86A2EE8FAf9A840F7a2c64CA3d51209F9A02081D"
+        },
+        "GraphTallyCollector": {
+            "address": "0xC9a43158891282A2B1475592D5719c001986Aaec"
+        },
+        "Controller": {
+            "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
+        },
+        "GraphProxyAdmin": {
+            "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+        },
+        "EpochManager": {
+            "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+            "proxy": "graph",
+            "implementation": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+        },
+        "L2GraphToken": {
+            "address": "0x3Aa5ebB10DC797CAC828524e59A333d0A371443c",
+            "proxy": "graph",
+            "implementation": "0x3Aa5ebB10DC797CAC828524e59A333d0A371443c"
+        },
+        "L2GraphTokenGateway": {
+            "address": "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690",
+            "proxy": "graph",
+            "implementation": "0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E"
+        }
+    }
+}

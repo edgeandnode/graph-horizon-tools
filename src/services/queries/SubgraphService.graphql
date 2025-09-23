@@ -1,0 +1,8 @@
+query SubgraphService($id: ID!) {
+  dataServices (where: { id: $id }) {
+    id
+    minimumProvisionTokens
+    maximumProvisionTokens
+  }
+}
+

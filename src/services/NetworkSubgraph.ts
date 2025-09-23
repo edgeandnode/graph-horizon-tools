@@ -1,10 +1,13 @@
 import { Schema } from "@effect/schema"
-import type { ParseError } from "@effect/schema/ParseResult"
 import { Context, Data, Effect, Layer } from "effect"
+import * as fs from "node:fs"
+import * as path from "node:path"
+import { fileURLToPath } from "node:url"
 import { ConfigService } from "./ConfigService.js"
-import { QueryLoader } from "./QueryLoader.js"
-import type { QueryName, QueryResponse } from "./schemas/index.js"
-import { QuerySchemas } from "./schemas/index.js"
+import type { GraphNetworkSubgraphResponse } from "./schemas/GraphNetwork.js"
+import { GraphNetwork } from "./schemas/GraphNetwork.js"
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export class NetworkSubgraphError extends Data.TaggedError("NetworkSubgraphError")<{
   message: string
@@ -15,22 +18,22 @@ export class NetworkSubgraphError extends Data.TaggedError("NetworkSubgraphError
 export class NetworkSubgraph extends Context.Tag("NetworkSubgraph")<
   NetworkSubgraph,
   {
-    readonly query: <T>(
-      query: string,
-      variables?: Record<string, unknown>
-    ) => Effect.Effect<T, NetworkSubgraphError>
-    readonly queryByName: (
-      queryName: QueryName,
-      variables?: Record<string, unknown>
-    ) => Effect.Effect<QueryResponse<QueryName>, NetworkSubgraphError | Error | ParseError>
+    readonly getGraphNetwork: () => Effect.Effect<GraphNetwork, NetworkSubgraphError>
   }
->() {}
+>() {
+  static loadQuery(queryName: string) {
+    return Effect.sync(() => {
+      const queriesDir = path.join(__dirname, "queries")
+      const query = fs.readFileSync(path.join(queriesDir, `${queryName}.graphql`), "utf-8").trim()
+      return query
+    })
+  }
+}
 
 export const SubgraphServiceLive = Layer.effect(
   NetworkSubgraph,
   Effect.gen(function*() {
     const config = yield* ConfigService
-    yield* QueryLoader.loadQueries()
 
     const query = <T>(query: string, variables?: Record<string, unknown>) =>
       Effect.gen(function*() {
@@ -98,26 +101,31 @@ export const SubgraphServiceLive = Layer.effect(
         return data.data
       })
 
-    const queryByName = (
-      queryName: QueryName,
-      variables?: Record<string, unknown>
-    ): Effect.Effect<QueryResponse<QueryName>, NetworkSubgraphError | Error | ParseError> =>
+    const getGraphNetwork = () =>
       Effect.gen(function*() {
-        const queryData = yield* QueryLoader.getQuery(queryName)
-        const rawResult = yield* query(queryData.query, variables)
-
-        if (queryName === "GetGraphNetwork") {
-          return yield* Schema.decodeUnknown(QuerySchemas.GetGraphNetwork)(rawResult)
-        } else if (queryName === "GetIndexers") {
-          return yield* Schema.decodeUnknown(QuerySchemas.GetIndexers)(rawResult)
-        } else {
-          throw new Error(`Schema not found for query: ${queryName}`)
+        const queryData = yield* NetworkSubgraph.loadQuery("GraphNetwork")
+        const rawResult = (yield* query(queryData)) as GraphNetworkSubgraphResponse
+        if (!rawResult.graphNetworks) {
+          throw new NetworkSubgraphError({
+            message: "Graph network not found"
+          })
         }
+        const graphNetwork = {
+          maxThawingPeriod: rawResult.graphNetworks[0].maxThawingPeriod.toString()
+        }
+        return yield* Schema.decodeUnknown(GraphNetwork)(graphNetwork).pipe(
+          Effect.catchTag("ParseError", (error) =>
+            Effect.fail(
+              new NetworkSubgraphError({
+                message: `Failed to parse graph network: ${error}`,
+                query: queryData
+              })
+            ))
+        )
       })
 
     return NetworkSubgraph.of({
-      query,
-      queryByName
+      getGraphNetwork
     })
   })
 )
