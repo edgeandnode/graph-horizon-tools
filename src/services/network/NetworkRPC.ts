@@ -1,9 +1,8 @@
-import { Schema } from "@effect/schema"
 import { connectGraphHorizon } from "@graphprotocol/toolshed/deployments"
 import { Context, Data, Effect, Layer } from "effect"
 import { JsonRpcProvider } from "ethers"
 import { ConfigService } from "../ConfigService.js"
-import { GraphNetwork } from "./schemas/GraphNetwork.js"
+import type { NetworkDataSource } from "./NetworkService.js"
 
 export class NetworkRPCError extends Data.TaggedError("NetworkRPCError")<{
   message: string
@@ -11,12 +10,7 @@ export class NetworkRPCError extends Data.TaggedError("NetworkRPCError")<{
   contract?: string
 }> {}
 
-export class NetworkRPC extends Context.Tag("NetworkRPC")<
-  NetworkRPC,
-  {
-    readonly getGraphNetwork: () => Effect.Effect<GraphNetwork, NetworkRPCError>
-  }
->() {}
+export class NetworkRPC extends Context.Tag("NetworkRPC")<NetworkRPC, NetworkDataSource>() {}
 
 export const NetworkRPCLive = Layer.effect(
   NetworkRPC,
@@ -30,9 +24,7 @@ export const NetworkRPCLive = Layer.effect(
           message: `Failed to get network info: ${error}`
         })
     })
-
     const chainId = Number(network.chainId)
-
     const contracts = yield* Effect.try({
       try: () => connectGraphHorizon(chainId, provider as any, "addresses.json"),
       catch: (error) =>
@@ -58,14 +50,7 @@ export const NetworkRPCLive = Layer.effect(
           { concurrency: "unbounded" }
         )
 
-        return yield* Schema.decodeUnknown(GraphNetwork)(rawResult).pipe(
-          Effect.catchTag("ParseError", (error) =>
-            Effect.fail(
-              new NetworkRPCError({
-                message: `Failed to parse graph network: ${error}`
-              })
-            ))
-        )
+        return rawResult
       })
 
     return NetworkRPC.of({

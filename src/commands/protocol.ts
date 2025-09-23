@@ -1,26 +1,32 @@
 import * as Command from "@effect/cli/Command"
 import { Console, Effect } from "effect"
-import { NetworkRPC } from "../services/network/NetworkRPC.js"
-import { NetworkSubgraph } from "../services/network/NetworkSubgraph.js"
+import { NetworkService } from "../services/network/NetworkService.js"
+import { Display } from "../utils/Display.js"
 
 export const protocol = Command.make(
   "protocol",
   {},
   () =>
     Effect.gen(function*() {
-      const rpcService = yield* NetworkRPC
-      const subgraphService = yield* NetworkSubgraph
+      yield* Display.header("Graph Protocol Network")
+      yield* Display.spinner("Fetching protocol data from RPC and Subgraph...")
 
-      const result = yield* rpcService.getGraphNetwork()
-      const subgraphResult = yield* subgraphService.getGraphNetwork()
+      const network = yield* NetworkService
+      const result = yield* network.getGraphNetwork()
 
-      yield* Console.log("Result:")
-      yield* Console.log(result)
-      yield* Console.log("Subgraph Result:")
-      yield* Console.log(subgraphResult)
+      yield* Display.success("Data validated successfully!")
+      yield* Display.section("Network Details")
+      yield* Display.bigNumber("Max Thawing Period", result.maxThawingPeriod)
+      yield* Console.log("")
+      yield* Display.divider()
     }).pipe(
-      Effect.catchAll((error) => Console.error(`Error: ${error}`))
+      Effect.catchAll((error) => {
+        return Effect.gen(function*() {
+          yield* Display.error(`Failed to fetch protocol data: ${error}`)
+          return yield* Console.error(error)
+        })
+      })
     )
 ).pipe(
-  Command.withDescription("Make RPC calls to Graph Horizon contracts")
+  Command.withDescription("Fetch protocol data with automatic RPC/Subgraph validation")
 )

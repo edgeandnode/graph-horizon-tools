@@ -1,9 +1,6 @@
 import { Schema } from "@effect/schema"
 import { Config } from "effect"
 
-const OutputFormat = Schema.Literal("json", "table", "compact")
-const ShowDiscrepancies = Schema.Literal("always", "never", "on-error")
-
 export const AppConfig = Schema.Struct({
   rpcUrl: Schema.NonEmptyString.pipe(
     Schema.annotations({
@@ -22,18 +19,12 @@ export const AppConfig = Schema.Struct({
       description: "The Graph Studio API key",
       examples: ["ca14fcc3d96ae6e16365f4d585481de6"]
     })
-  ),
-  outputFormat: Schema.optionalWith(OutputFormat, { default: () => "table" as const }),
-  showDiscrepancies: Schema.optionalWith(ShowDiscrepancies, { default: () => "on-error" as const })
+  )
 })
 export type AppConfig = Schema.Schema.Type<typeof AppConfig>
 
 export const loadConfig = Config.all({
   rpcUrl: Config.string("RPC_URL"),
   subgraphUrl: Config.string("SUBGRAPH_URL"),
-  studioApiKey: Config.string("STUDIO_API_KEY"),
-  outputFormat: Schema.Config("OUTPUT_FORMAT", Schema.String.pipe(Schema.compose(OutputFormat)))
-    .pipe(Config.withDefault("table" as const)),
-  showDiscrepancies: Schema.Config("SHOW_DISCREPANCIES", Schema.String.pipe(Schema.compose(ShowDiscrepancies)))
-    .pipe(Config.withDefault("on-error" as const))
+  studioApiKey: Config.string("STUDIO_API_KEY")
 })

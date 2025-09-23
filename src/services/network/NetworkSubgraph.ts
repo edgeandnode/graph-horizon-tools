@@ -1,13 +1,10 @@
-import { Schema } from "@effect/schema"
 import { Context, Data, Effect, Layer } from "effect"
 import * as fs from "node:fs"
 import * as path from "node:path"
 import { fileURLToPath } from "node:url"
 import { ConfigService } from "../ConfigService.js"
+import type { NetworkDataSource } from "./NetworkService.js"
 import type { GraphNetworkSubgraphResponse } from "./schemas/GraphNetwork.js"
-import { GraphNetwork } from "./schemas/GraphNetwork.js"
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export class NetworkSubgraphError extends Data.TaggedError("NetworkSubgraphError")<{
   message: string
@@ -15,15 +12,10 @@ export class NetworkSubgraphError extends Data.TaggedError("NetworkSubgraphError
   variables?: unknown
 }> {}
 
-export class NetworkSubgraph extends Context.Tag("NetworkSubgraph")<
-  NetworkSubgraph,
-  {
-    readonly getGraphNetwork: () => Effect.Effect<GraphNetwork, NetworkSubgraphError>
-  }
->() {
+export class NetworkSubgraph extends Context.Tag("NetworkSubgraph")<NetworkSubgraph, NetworkDataSource>() {
   static loadQuery(queryName: string) {
     return Effect.sync(() => {
-      const queriesDir = path.join(__dirname, "queries")
+      const queriesDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "queries")
       const query = fs.readFileSync(path.join(queriesDir, `${queryName}.graphql`), "utf-8").trim()
       return query
     })
@@ -110,18 +102,9 @@ export const NetworkSubgraphlive = Layer.effect(
             message: "Graph network not found"
           })
         }
-        const graphNetwork = {
+        return {
           maxThawingPeriod: BigInt(rawResult.graphNetworks[0].maxThawingPeriod)
         }
-        return yield* Schema.decodeUnknown(GraphNetwork)(graphNetwork).pipe(
-          Effect.catchTag("ParseError", (error) =>
-            Effect.fail(
-              new NetworkSubgraphError({
-                message: `Failed to parse graph network: ${error}`,
-                query: queryData
-              })
-            ))
-        )
       })
 
     return NetworkSubgraph.of({
