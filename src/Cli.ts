@@ -1,13 +1,13 @@
 import * as Command from "@effect/cli/Command"
 import { Console, Effect, Layer } from "effect"
-import { config, network } from "./commands/index.js"
+import { config, protocol } from "./commands/index.js"
 import { ConfigServiceLive } from "./services/ConfigService.js"
-import { NetworkRPCLive } from "./services/NetworkRPC.js"
-import { SubgraphServiceLive } from "./services/NetworkSubgraph.js"
+import { NetworkRPCLive } from "./services/network/NetworkRPC.js"
+import { NetworkSubgraphlive } from "./services/network/NetworkSubgraph.js"
 
 const AppLayer = Layer.mergeAll(
   ConfigServiceLive,
-  SubgraphServiceLive.pipe(Layer.provide(ConfigServiceLive)),
+  NetworkSubgraphlive.pipe(Layer.provide(ConfigServiceLive)),
   NetworkRPCLive.pipe(Layer.provide(ConfigServiceLive))
 )
 
@@ -15,7 +15,7 @@ const command = Command.make("horizon", {
   args: {}
 }).pipe(
   Command.withDescription("Graph Horizon CLI application - The Graph protocol at a glance."),
-  Command.withSubcommands([config, network])
+  Command.withSubcommands([config, protocol])
 )
 
 export const run = (args: ReadonlyArray<string>) =>

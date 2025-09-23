@@ -1,8 +1,9 @@
+import { Schema } from "@effect/schema"
 import { connectGraphHorizon } from "@graphprotocol/toolshed/deployments"
 import { Context, Data, Effect, Layer } from "effect"
 import { JsonRpcProvider } from "ethers"
-import { ConfigService } from "./ConfigService.js"
-import type { GraphNetwork } from "./schemas/GraphNetwork.js"
+import { ConfigService } from "../ConfigService.js"
+import { GraphNetwork } from "./schemas/GraphNetwork.js"
 
 export class NetworkRPCError extends Data.TaggedError("NetworkRPCError")<{
   message: string
@@ -41,20 +42,31 @@ export const NetworkRPCLive = Layer.effect(
     })
 
     const getGraphNetwork = () =>
-      Effect.all(
-        {
-          maxThawingPeriod: Effect.tryPromise({
-            try: () => contracts.HorizonStaking.getMaxThawingPeriod(),
-            catch: (e) =>
+      Effect.gen(function*() {
+        const rawResult = yield* Effect.all(
+          {
+            maxThawingPeriod: Effect.tryPromise({
+              try: () => contracts.HorizonStaking.getMaxThawingPeriod(),
+              catch: (e) =>
+                new NetworkRPCError({
+                  message: `getMaxThawingPeriod failed: ${String(e)}`,
+                  contract: "HorizonStaking",
+                  method: "getMaxThawingPeriod"
+                })
+            })
+          },
+          { concurrency: "unbounded" }
+        )
+
+        return yield* Schema.decodeUnknown(GraphNetwork)(rawResult).pipe(
+          Effect.catchTag("ParseError", (error) =>
+            Effect.fail(
               new NetworkRPCError({
-                message: `getMaxThawingPeriod failed: ${String(e)}`,
-                contract: "HorizonStaking",
-                method: "getMaxThawingPeriod"
+                message: `Failed to parse graph network: ${error}`
               })
-          })
-        },
-        { concurrency: "unbounded" }
-      )
+            ))
+        )
+      })
 
     return NetworkRPC.of({
       getGraphNetwork

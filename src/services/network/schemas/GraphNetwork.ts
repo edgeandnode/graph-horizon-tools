@@ -1,7 +1,7 @@
 import { Schema } from "@effect/schema"
 
 export const GraphNetwork = Schema.Struct({
-  maxThawingPeriod: Schema.BigInt
+  maxThawingPeriod: Schema.BigIntFromSelf
 })
 
 export const GraphNetworkSubgraphResponse = Schema.Struct({

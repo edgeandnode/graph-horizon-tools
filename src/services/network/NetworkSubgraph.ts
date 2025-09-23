@@ -3,7 +3,7 @@ import { Context, Data, Effect, Layer } from "effect"
 import * as fs from "node:fs"
 import * as path from "node:path"
 import { fileURLToPath } from "node:url"
-import { ConfigService } from "./ConfigService.js"
+import { ConfigService } from "../ConfigService.js"
 import type { GraphNetworkSubgraphResponse } from "./schemas/GraphNetwork.js"
 import { GraphNetwork } from "./schemas/GraphNetwork.js"
 
@@ -30,7 +30,7 @@ export class NetworkSubgraph extends Context.Tag("NetworkSubgraph")<
   }
 }
 
-export const SubgraphServiceLive = Layer.effect(
+export const NetworkSubgraphlive = Layer.effect(
   NetworkSubgraph,
   Effect.gen(function*() {
     const config = yield* ConfigService
@@ -111,7 +111,7 @@ export const SubgraphServiceLive = Layer.effect(
           })
         }
         const graphNetwork = {
-          maxThawingPeriod: rawResult.graphNetworks[0].maxThawingPeriod.toString()
+          maxThawingPeriod: BigInt(rawResult.graphNetworks[0].maxThawingPeriod)
         }
         return yield* Schema.decodeUnknown(GraphNetwork)(graphNetwork).pipe(
           Effect.catchTag("ParseError", (error) =>

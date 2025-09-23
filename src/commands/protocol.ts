@@ -1,10 +1,10 @@
 import * as Command from "@effect/cli/Command"
 import { Console, Effect } from "effect"
-import { NetworkRPC } from "../services/NetworkRPC.js"
-import { NetworkSubgraph } from "../services/NetworkSubgraph.js"
+import { NetworkRPC } from "../services/network/NetworkRPC.js"
+import { NetworkSubgraph } from "../services/network/NetworkSubgraph.js"
 
-export const network = Command.make(
-  "network",
+export const protocol = Command.make(
+  "protocol",
   {},
   () =>
     Effect.gen(function*() {
