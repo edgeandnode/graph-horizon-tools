@@ -2,7 +2,7 @@ import { connectGraphHorizon, connectSubgraphService } from "@graphprotocol/tool
 import { Context, Data, Effect, Layer } from "effect"
 import { JsonRpcProvider } from "ethers"
 import { ConfigService } from "../ConfigService.js"
-import type { NetworkDataSource } from "./NetworkService.js"
+import type { NetworkDataSource } from "./NetworkDataSource.js"
 
 export class NetworkRPCError extends Data.TaggedError("NetworkRPCError")<{
   message: string

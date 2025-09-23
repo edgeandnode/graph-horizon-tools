@@ -11,24 +11,39 @@ export const protocol = Command.make(
       yield* Display.header("Graph Protocol Network")
 
       const network = yield* NetworkService
-      const horizon = yield* network.getGraphNetwork()
-      const subgraphService = yield* network.getSubgraphService()
+      const horizonResult = yield* network.getGraphNetwork()
+      const subgraphServiceResult = yield* network.getSubgraphService()
+
+      const allMismatches = [...horizonResult.mismatches, ...subgraphServiceResult.mismatches]
+
+      if (allMismatches.length > 0) {
+        yield* Display.error(`⚠️  CRITICAL: Found ${allMismatches.length} data mismatch(es) between RPC and Subgraph!`)
+        yield* Display.section("Data Mismatches Detected")
+        for (const mismatch of allMismatches) {
+          yield* Display.warning(`${mismatch.key}`)
+          yield* Display.keyValue("  RPC Value", String(mismatch.rpcValue))
+          yield* Display.keyValue("  Subgraph Value", String(mismatch.subgraphValue))
+        }
+        yield* Console.log("")
+      } else {
+        yield* Display.success("✅ All data sources match - validation successful!")
+      }
 
       yield* Display.section("Graph Horizon Details")
-      yield* Display.bigNumber("Max Thawing Period", horizon.maxThawingPeriod)
+      yield* Display.bigNumber("Max Thawing Period", horizonResult.data.maxThawingPeriod)
       yield* Console.log("")
 
       yield* Display.section("Subgraph Service Details")
-      yield* Display.bigNumber("Minimum Provision Tokens", subgraphService.minimumProvisionTokens)
-      yield* Display.bigNumber("Maximum Provision Tokens", subgraphService.maximumProvisionTokens)
-      yield* Display.bigNumber("Minimum Verifier Cut", subgraphService.minimumVerifierCut)
-      yield* Display.bigNumber("Maximum Verifier Cut", subgraphService.maximumVerifierCut)
-      yield* Display.bigNumber("Minimum Thawing Period", subgraphService.minimumThawingPeriod)
-      yield* Display.bigNumber("Maximum Thawing Period", subgraphService.maximumThawingPeriod)
-      yield* Display.bigNumber("Max POI Staleness", subgraphService.maxPOIStaleness)
-      yield* Display.bigNumber("Delegation Ratio", subgraphService.delegationRatio)
-      yield* Display.bigNumber("Stake to Fees Ratio", subgraphService.stakeToFeesRatio)
-      yield* Display.bigNumber("Curation Cut", subgraphService.curationCut)
+      yield* Display.tokenValue("Minimum Provision Tokens", subgraphServiceResult.data.minimumProvisionTokens)
+      yield* Display.tokenValue("Maximum Provision Tokens", subgraphServiceResult.data.maximumProvisionTokens)
+      yield* Display.bigNumber("Minimum Verifier Cut", subgraphServiceResult.data.minimumVerifierCut)
+      yield* Display.bigNumber("Maximum Verifier Cut", subgraphServiceResult.data.maximumVerifierCut)
+      yield* Display.bigNumber("Minimum Thawing Period", subgraphServiceResult.data.minimumThawingPeriod)
+      yield* Display.bigNumber("Maximum Thawing Period", subgraphServiceResult.data.maximumThawingPeriod)
+      yield* Display.bigNumber("Max POI Staleness", subgraphServiceResult.data.maxPOIStaleness)
+      yield* Display.bigNumber("Delegation Ratio", subgraphServiceResult.data.delegationRatio)
+      yield* Display.bigNumber("Stake to Fees Ratio", subgraphServiceResult.data.stakeToFeesRatio)
+      yield* Display.bigNumber("Curation Cut", subgraphServiceResult.data.curationCut)
       yield* Console.log("")
 
       yield* Display.divider()

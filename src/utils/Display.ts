@@ -1,4 +1,5 @@
 import { Console, Effect } from "effect"
+import { ethers } from "ethers"
 
 export class Display {
   // ANSI color codes
@@ -74,6 +75,10 @@ export class Display {
     // Format big numbers with commas
     const formatted = value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
     return Display.keyValue(label, formatted)
+  }
+
+  static tokenValue(label: string, value: bigint): Effect.Effect<void, never> {
+    return Display.keyValue(label, ethers.formatEther(value))
   }
 
   static spinner(message: string): Effect.Effect<void, never> {

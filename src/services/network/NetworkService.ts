@@ -1,32 +1,30 @@
-import { Context, Data, Effect, Layer } from "effect"
+import { Schema } from "@effect/schema"
+import type { ParseError } from "@effect/schema/ParseResult"
+import { Context, Effect, Layer } from "effect"
 import type { NetworkRPCError } from "./NetworkRPC.js"
 import { NetworkRPC } from "./NetworkRPC.js"
 import type { NetworkSubgraphError } from "./NetworkSubgraph.js"
 import { NetworkSubgraph } from "./NetworkSubgraph.js"
-import type { GraphNetwork } from "./schemas/GraphNetwork.js"
-import type { SubgraphService } from "./schemas/SubgraphService.js"
+import { GraphNetwork } from "./schemas/GraphNetwork.js"
+import { SubgraphService } from "./schemas/SubgraphService.js"
 
-export class DataMismatchError extends Data.TaggedError("DataMismatchError")<{
-  message: string
-  method: string
-  rpcData: unknown
-  subgraphData: unknown
-}> {}
-
-export type NetworkServiceError = DataMismatchError | NetworkSubgraphError | NetworkRPCError
-
-/**
- * Network data can be fetched from multiple sources. This abstract class is used to define the interface for these sources.
- * Available sources are:
- * - RPC calls to Graph Horizon contracts
- * - Graph NetworkSubgraph
- */
-export abstract class NetworkDataSource {
-  abstract getGraphNetwork(): Effect.Effect<GraphNetwork, NetworkServiceError>
-  abstract getSubgraphService(): Effect.Effect<SubgraphService, NetworkServiceError>
+export interface DataMismatch {
+  key: string
+  rpcValue: unknown
+  subgraphValue: unknown
 }
 
-export class NetworkService extends Context.Tag("NetworkService")<NetworkService, NetworkDataSource>() {}
+export interface NetworkResult<T> {
+  data: T
+  mismatches: Array<DataMismatch>
+}
+
+export type NetworkServiceError = NetworkSubgraphError | NetworkRPCError | ParseError
+
+export class NetworkService extends Context.Tag("NetworkService")<NetworkService, {
+  getGraphNetwork: () => Effect.Effect<NetworkResult<GraphNetwork>, NetworkServiceError>
+  getSubgraphService: () => Effect.Effect<NetworkResult<SubgraphService>, NetworkServiceError>
+}>() {}
 
 export const NetworkServiceLive = Layer.effect(
   NetworkService,
@@ -41,18 +39,13 @@ export const NetworkServiceLive = Layer.effect(
           { concurrency: "unbounded" }
         )
 
-        if (!deepEqual(rpcData, subgraphData)) {
-          return yield* Effect.fail(
-            new DataMismatchError({
-              message: "Data mismatch between RPC and Subgraph!",
-              method: "getGraphNetwork",
-              rpcData,
-              subgraphData
-            })
-          )
-        }
+        const mismatches = findMismatches(rpcData, subgraphData)
+        const validatedData = yield* Schema.decodeUnknown(GraphNetwork)(rpcData)
 
-        return rpcData
+        return {
+          data: validatedData,
+          mismatches
+        }
       })
 
     const getSubgraphService = () =>
@@ -62,18 +55,13 @@ export const NetworkServiceLive = Layer.effect(
           { concurrency: "unbounded" }
         )
 
-        if (!deepEqual(rpcData, subgraphData)) {
-          return yield* Effect.fail(
-            new DataMismatchError({
-              message: "Data mismatch between RPC and Subgraph!",
-              method: "getSubgraphService",
-              rpcData,
-              subgraphData
-            })
-          )
-        }
+        const mismatches = findMismatches(rpcData, subgraphData)
+        const validatedData = yield* Schema.decodeUnknown(SubgraphService)(rpcData)
 
-        return rpcData
+        return {
+          data: validatedData,
+          mismatches
+        }
       })
 
     return NetworkService.of({
@@ -82,6 +70,39 @@ export const NetworkServiceLive = Layer.effect(
     })
   })
 )
+
+function findMismatches(a: unknown, b: unknown): Array<DataMismatch> {
+  const mismatches: Array<DataMismatch> = []
+
+  // If both are objects, compare each key
+  if (a && b && typeof a === "object" && typeof b === "object" && !Array.isArray(a) && !Array.isArray(b)) {
+    const aObj = a as Record<string, unknown>
+    const bObj = b as Record<string, unknown>
+
+    const allKeys = new Set([...Object.keys(aObj), ...Object.keys(bObj)])
+
+    for (const key of allKeys) {
+      const aValue = aObj[key]
+      const bValue = bObj[key]
+
+      if (!deepEqual(aValue, bValue)) {
+        mismatches.push({
+          key,
+          rpcValue: aValue,
+          subgraphValue: bValue
+        })
+      }
+    }
+  } else if (!deepEqual(a, b)) {
+    mismatches.push({
+      key: "root",
+      rpcValue: a,
+      subgraphValue: b
+    })
+  }
+
+  return mismatches
+}
 
 function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true

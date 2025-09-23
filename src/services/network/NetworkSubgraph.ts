@@ -3,7 +3,7 @@ import * as fs from "node:fs"
 import * as path from "node:path"
 import { fileURLToPath } from "node:url"
 import { ConfigService } from "../ConfigService.js"
-import type { NetworkDataSource } from "./NetworkService.js"
+import type { NetworkDataSource } from "./NetworkDataSource.js"
 import type { GraphNetworkSubgraphResponse } from "./schemas/GraphNetwork.js"
 import type { SubgraphServiceSubgraphResponse } from "./schemas/SubgraphService.js"
 
