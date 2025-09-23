@@ -1,0 +1,15 @@
+query GetGraphNetwork {
+  graphNetworks {
+    id
+    controller
+    totalSupply
+    totalDelegatedTokens
+    totalTokensStaked
+    totalQueryFees
+    totalCuratorQueryFees
+    networkGRTIssuance
+    epochManager
+    epochLength
+    currentEpoch
+  }
+}

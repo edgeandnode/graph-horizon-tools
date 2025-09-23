@@ -1,0 +1,12 @@
+query GetIndexers($first: Int = 10, $skip: Int = 0) {
+  indexers(first: $first, skip: $skip, orderBy: stakedTokens, orderDirection: desc) {
+    id
+    url
+    stakedTokens
+    allocatedTokens
+    lockedTokens
+    queryFeesCollected
+    rewardsEarned
+    indexerIndexingRewards
+  }
+}
