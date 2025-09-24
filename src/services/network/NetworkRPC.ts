@@ -1,6 +1,6 @@
 import { connectGraphHorizon, connectSubgraphService } from "@graphprotocol/toolshed/deployments"
 import { Context, Data, Effect, Layer } from "effect"
-import { JsonRpcProvider } from "ethers"
+import { AbiCoder, JsonRpcProvider, keccak256 } from "ethers"
 import { ConfigService } from "../ConfigService.js"
 import type { NetworkDataSource } from "./NetworkDataSource.js"
 
@@ -188,10 +188,139 @@ export const NetworkRPCLive = Layer.effect(
         }
       })
 
+    const getIndexer = (address: string) =>
+      Effect.gen(function*() {
+        const rawResult = yield* Effect.all(
+          {
+            registrationData: Effect.tryPromise({
+              try: () => subgraphServiceContracts.SubgraphService.indexers(address),
+              catch: (e) =>
+                new NetworkRPCError({
+                  message: `id failed: ${String(e)}`,
+                  contract: "Indexer",
+                  method: "id"
+                })
+            }),
+            rewardsDestination: Effect.tryPromise({
+              try: () => subgraphServiceContracts.SubgraphService.paymentsDestination(address),
+              catch: (e) =>
+                new NetworkRPCError({
+                  message: `paymentsDestination failed: ${String(e)}`,
+                  contract: "SubgraphService",
+                  method: "paymentsDestination"
+                })
+            }),
+            serviceProvider: Effect.tryPromise({
+              try: () => horizonContracts.HorizonStaking.getServiceProvider(address),
+              catch: (e) =>
+                new NetworkRPCError({
+                  message: `stakedTokens failed: ${String(e)}`,
+                  contract: "HorizonStaking",
+                  method: "getStake"
+                })
+            }),
+            delegationPool: Effect.tryPromise({
+              try: () =>
+                horizonContracts.HorizonStaking.getDelegationPool(
+                  address,
+                  subgraphServiceContracts.SubgraphService.target
+                ),
+              catch: (e) =>
+                new NetworkRPCError({
+                  message: `delegationPool failed: ${String(e)}`,
+                  contract: "HorizonStaking",
+                  method: "getDelegationPool"
+                })
+            }),
+            provision: Effect.tryPromise({
+              try: () =>
+                horizonContracts.HorizonStaking.getProvision(address, subgraphServiceContracts.SubgraphService.target),
+              catch: (e) =>
+                new NetworkRPCError({
+                  message: `provision failed: ${String(e)}`,
+                  contract: "HorizonStaking",
+                  method: "getProvision"
+                })
+            }),
+            allocationProvisionTracker: Effect.tryPromise({
+              try: () => subgraphServiceContracts.SubgraphService.allocationProvisionTracker(address),
+              catch: (e) =>
+                new NetworkRPCError({
+                  message: `allocationProvisionTracker failed: ${String(e)}`,
+                  contract: "SubgraphService",
+                  method: "allocationProvisionTracker"
+                })
+            }),
+            legacyData: Effect.tryPromise({
+              try: () => getLegacyData(provider, horizonContracts.HorizonStaking.target.toString(), address),
+              catch: (e) =>
+                new NetworkRPCError({
+                  message: `legacyTokensAllocated failed: ${String(e)}`,
+                  contract: "HorizonStaking",
+                  method: "getLegacyTokensAllocated"
+                })
+            }),
+            idleTokens: Effect.tryPromise({
+              try: () => horizonContracts.HorizonStaking.getIdleStake(address),
+              catch: (e) =>
+                new NetworkRPCError({
+                  message: `idleTokens failed: ${String(e)}`,
+                  contract: "HorizonStaking",
+                  method: "getIdleStake"
+                })
+            })
+          },
+          { concurrency: "unbounded" }
+        )
+
+        return {
+          id: address,
+          url: rawResult.registrationData.url,
+          geoHash: rawResult.registrationData.geoHash,
+          rewardsDestination: rawResult.rewardsDestination,
+          stakedTokens: rawResult.serviceProvider.tokensStaked,
+          delegatedTokens: rawResult.delegationPool.tokens,
+          totalProvisionedTokens: rawResult.serviceProvider.tokensProvisioned,
+          legacyTokensAllocated: rawResult.legacyData.tokensAllocated,
+          legacyTokensLocked: rawResult.legacyData.tokensLocked,
+          idleTokens: rawResult.idleTokens,
+          provisionedTokens: rawResult.provision.tokens,
+          allocatedTokens: rawResult.allocationProvisionTracker,
+          thawingTokens: rawResult.provision.tokensThawing
+        }
+      })
+
     return NetworkRPC.of({
       getGraphNetwork,
       getSubgraphService,
-      getDisputeManager
+      getDisputeManager,
+      getIndexer
     })
   })
 )
+
+async function getLegacyData(
+  provider: JsonRpcProvider,
+  stakingAddress: string,
+  serviceProvider: string
+): Promise<{ tokensAllocated: bigint; tokensLocked: bigint }> {
+  const slotNumber = 14n
+
+  // Compute the mapping base slot: keccak256(abi.encode(serviceProvider, slotNumber))
+  const encoded = AbiCoder.defaultAbiCoder().encode(
+    ["address", "uint256"],
+    [serviceProvider, slotNumber]
+  )
+  const baseSlot = BigInt(keccak256(encoded))
+
+  // Fetch storage slots in parallel
+  const [allocatedRaw, lockedRaw] = await Promise.all([
+    provider.getStorage(stakingAddress, baseSlot + 1n),
+    provider.getStorage(stakingAddress, baseSlot + 2n)
+  ])
+
+  return {
+    tokensAllocated: BigInt(allocatedRaw),
+    tokensLocked: BigInt(lockedRaw)
+  }
+}

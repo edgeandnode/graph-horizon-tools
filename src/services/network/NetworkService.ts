@@ -7,6 +7,7 @@ import type { NetworkSubgraphError } from "./NetworkSubgraph.js"
 import { NetworkSubgraph } from "./NetworkSubgraph.js"
 import { DisputeManager } from "./schemas/DisputeManager.js"
 import { GraphNetwork } from "./schemas/GraphNetwork.js"
+import { Indexer } from "./schemas/Indexer.js"
 import { SubgraphService } from "./schemas/SubgraphService.js"
 
 export interface DataMismatch {
@@ -26,6 +27,7 @@ export class NetworkService extends Context.Tag("NetworkService")<NetworkService
   getGraphNetwork: () => Effect.Effect<NetworkResult<GraphNetwork>, NetworkServiceError>
   getSubgraphService: () => Effect.Effect<NetworkResult<SubgraphService>, NetworkServiceError>
   getDisputeManager: () => Effect.Effect<NetworkResult<DisputeManager>, NetworkServiceError>
+  getIndexer: (address: string) => Effect.Effect<NetworkResult<Indexer>, NetworkServiceError>
 }>() {}
 
 export const NetworkServiceLive = Layer.effect(
@@ -82,10 +84,27 @@ export const NetworkServiceLive = Layer.effect(
         }
       })
 
+    const getIndexer = (address: string) =>
+      Effect.gen(function*() {
+        const [rpcData, subgraphData] = yield* Effect.all(
+          [rpc.getIndexer(address), subgraph.getIndexer(address)],
+          { concurrency: "unbounded" }
+        )
+
+        const mismatches = findMismatches(rpcData, subgraphData)
+        const validatedData = yield* Schema.decodeUnknown(Indexer)(rpcData)
+
+        return {
+          data: validatedData,
+          mismatches
+        }
+      })
+
     return NetworkService.of({
       getGraphNetwork,
       getSubgraphService,
-      getDisputeManager
+      getDisputeManager,
+      getIndexer
     })
   })
 )

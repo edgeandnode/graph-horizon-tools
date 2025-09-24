@@ -1,0 +1,25 @@
+import { Schema } from "@effect/schema"
+
+export const Indexer = Schema.Struct({
+  id: Schema.String,
+  url: Schema.String,
+  geoHash: Schema.String,
+  rewardsDestination: Schema.String,
+  stakedTokens: Schema.BigIntFromSelf,
+  delegatedTokens: Schema.BigIntFromSelf,
+  totalProvisionedTokens: Schema.BigIntFromSelf,
+  legacyTokensAllocated: Schema.BigIntFromSelf,
+  legacyTokensLocked: Schema.BigIntFromSelf,
+  idleTokens: Schema.BigIntFromSelf,
+  provisionedTokens: Schema.BigIntFromSelf,
+  allocatedTokens: Schema.BigIntFromSelf,
+  thawingTokens: Schema.BigIntFromSelf
+})
+
+export const IndexerSubgraphResponse = Schema.Struct({
+  indexers: Schema.Array(Schema.Any),
+  provisions: Schema.Array(Schema.Any)
+})
+
+export type Indexer = Schema.Schema.Type<typeof Indexer>
+export type IndexerSubgraphResponse = Schema.Schema.Type<typeof IndexerSubgraphResponse>

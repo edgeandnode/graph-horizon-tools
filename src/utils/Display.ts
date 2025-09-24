@@ -22,6 +22,14 @@ export class Display {
     return `${Display.colors[color]}${text}${Display.colors.reset}`
   }
 
+  static bold(text: string): string {
+    return `${Display.colors.bright}${text}${Display.colors.reset}`
+  }
+
+  static boldColor(text: string, color: keyof typeof Display.colors): string {
+    return `${Display.colors.bright}${Display.colors[color]}${text}${Display.colors.reset}`
+  }
+
   static header(title: string): Effect.Effect<void, never> {
     const line = "═".repeat(50)
     return Effect.gen(function*() {
@@ -77,7 +85,13 @@ export class Display {
   }
 
   static tokenValue(label: string, value: bigint): Effect.Effect<void, never> {
-    return Display.keyValue(label, `${ethers.formatEther(value)} GRT`)
+    return Display.keyValue(label, `${ethers.formatEther(value)} GRT`.replace(/\B(?=(\d{3})+(?!\d))/g, ","))
+  }
+
+  static totalTokenValue(label: string, value: bigint): Effect.Effect<void, never> {
+    const formattedValue = `${ethers.formatEther(value)} GRT`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+    const formattedKey = Display.boldColor(label.padEnd(20), "cyan")
+    return Console.log(`  ${formattedKey} ${Display.bold(formattedValue)}`)
   }
 
   static timeValue(label: string, value: bigint): Effect.Effect<void, never> {

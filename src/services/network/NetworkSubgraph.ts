@@ -6,6 +6,7 @@ import { ConfigService } from "../ConfigService.js"
 import type { NetworkDataSource } from "./NetworkDataSource.js"
 import type { DisputeManagerSubgraphResponse } from "./schemas/DisputeManager.js"
 import type { GraphNetworkSubgraphResponse } from "./schemas/GraphNetwork.js"
+import type { IndexerSubgraphResponse } from "./schemas/Indexer.js"
 import type { SubgraphServiceSubgraphResponse } from "./schemas/SubgraphService.js"
 
 export class NetworkSubgraphError extends Data.TaggedError("NetworkSubgraphError")<{
@@ -150,10 +151,44 @@ export const NetworkSubgraphlive = Layer.effect(
         }
       })
 
+    const getIndexer = (address: string) =>
+      Effect.gen(function*() {
+        const queryData = yield* NetworkSubgraph.loadQuery("Indexer")
+        const rawResult = (yield* query(queryData, { id: address.toLowerCase() })) as IndexerSubgraphResponse
+        if (!rawResult.indexers) {
+          throw new NetworkSubgraphError({
+            message: "Indexer not found"
+          })
+        }
+
+        const legacyTokensAllocated = BigInt(rawResult.indexers[0].allocatedTokens) -
+          BigInt(rawResult.provisions[0].tokensAllocated)
+        const idleTokens = BigInt(rawResult.indexers[0].stakedTokens) -
+          legacyTokensAllocated -
+          BigInt(rawResult.indexers[0].legacyLockedTokens) -
+          BigInt(rawResult.indexers[0].provisionedTokens)
+        return {
+          id: rawResult.indexers[0].id,
+          url: rawResult.indexers[0].url,
+          geoHash: rawResult.indexers[0].geoHash,
+          rewardsDestination: rawResult.indexers[0].rewardsDestination,
+          stakedTokens: BigInt(rawResult.indexers[0].stakedTokens),
+          delegatedTokens: BigInt(rawResult.indexers[0].delegatedTokens),
+          totalProvisionedTokens: BigInt(rawResult.indexers[0].provisionedTokens),
+          legacyTokensAllocated,
+          legacyTokensLocked: BigInt(rawResult.indexers[0].legacyLockedTokens),
+          idleTokens,
+          allocatedTokens: BigInt(rawResult.provisions[0].tokensAllocated),
+          thawingTokens: BigInt(rawResult.provisions[0].tokensThawing),
+          provisionedTokens: BigInt(rawResult.provisions[0].tokensProvisioned)
+        }
+      })
+
     return NetworkSubgraph.of({
       getGraphNetwork,
       getSubgraphService,
-      getDisputeManager
+      getDisputeManager,
+      getIndexer
     })
   })
 )

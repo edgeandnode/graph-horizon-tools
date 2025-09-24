@@ -1,0 +1,18 @@
+query Indexer ($id: ID) {
+    indexers(where: { id: $id }) {
+        id
+        url
+        geoHash
+        rewardsDestination
+        stakedTokens
+        delegatedTokens
+        provisionedTokens
+        legacyLockedTokens
+        allocatedTokens
+    }
+    provisions (where: { indexer_: { id: $id }}){
+        tokensProvisioned
+        tokensAllocated
+        tokensThawing
+    }
+}
