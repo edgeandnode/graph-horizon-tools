@@ -14,7 +14,8 @@ export const SubgraphService = Schema.Struct({
 })
 
 export const SubgraphServiceSubgraphResponse = Schema.Struct({
-  dataServices: Schema.Array(Schema.Any)
+  dataServices: Schema.Array(Schema.Any),
+  graphNetworks: Schema.Array(Schema.Any)
 })
 
 export type SubgraphService = Schema.Schema.Type<typeof SubgraphService>

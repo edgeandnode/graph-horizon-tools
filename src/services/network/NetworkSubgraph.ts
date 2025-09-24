@@ -4,6 +4,7 @@ import * as path from "node:path"
 import { fileURLToPath } from "node:url"
 import { ConfigService } from "../ConfigService.js"
 import type { NetworkDataSource } from "./NetworkDataSource.js"
+import type { DisputeManagerSubgraphResponse } from "./schemas/DisputeManager.js"
 import type { GraphNetworkSubgraphResponse } from "./schemas/GraphNetwork.js"
 import type { SubgraphServiceSubgraphResponse } from "./schemas/SubgraphService.js"
 
@@ -72,6 +73,8 @@ export const NetworkSubgraphlive = Layer.effect(
         })
 
         if (data.errors && data.errors.length > 0) {
+          console.log(data.errors)
+          console.log(query)
           return yield* Effect.fail(
             new NetworkSubgraphError({
               message: `GraphQL errors: ${data.errors.map((e) => e.message).join(", ")}`,
@@ -112,7 +115,7 @@ export const NetworkSubgraphlive = Layer.effect(
       Effect.gen(function*() {
         const queryData = yield* NetworkSubgraph.loadQuery("SubgraphService")
         const rawResult = (yield* query(queryData)) as SubgraphServiceSubgraphResponse
-        if (!rawResult.dataServices) {
+        if (!rawResult.dataServices || !rawResult.graphNetworks) {
           throw new NetworkSubgraphError({
             message: "Subgraph service not found"
           })
@@ -120,10 +123,10 @@ export const NetworkSubgraphlive = Layer.effect(
         return {
           minimumProvisionTokens: BigInt(rawResult.dataServices[0].minimumProvisionTokens),
           maximumProvisionTokens: BigInt(rawResult.dataServices[0].maximumProvisionTokens),
-          minimumVerifierCut: BigInt(rawResult.dataServices[0].minimumVerifierCut),
+          minimumVerifierCut: BigInt(rawResult.graphNetworks[0].fishermanRewardCut),
           maximumVerifierCut: BigInt(rawResult.dataServices[0].maximumVerifierCut),
-          minimumThawingPeriod: BigInt(rawResult.dataServices[0].minimumThawingPeriod),
-          maximumThawingPeriod: BigInt(rawResult.dataServices[0].maximumThawingPeriod),
+          minimumThawingPeriod: BigInt(rawResult.graphNetworks[0].disputePeriod),
+          maximumThawingPeriod: BigInt(rawResult.graphNetworks[0].disputePeriod),
           maxPOIStaleness: BigInt(rawResult.dataServices[0].maxPOIStaleness),
           delegationRatio: BigInt(rawResult.dataServices[0].delegationRatio),
           stakeToFeesRatio: BigInt(rawResult.dataServices[0].stakeToFeesRatio),
@@ -131,9 +134,26 @@ export const NetworkSubgraphlive = Layer.effect(
         }
       })
 
+    const getDisputeManager = () =>
+      Effect.gen(function*() {
+        const queryData = yield* NetworkSubgraph.loadQuery("DisputeManager")
+        const rawResult = (yield* query(queryData)) as DisputeManagerSubgraphResponse
+        if (!rawResult.graphNetworks) {
+          throw new NetworkSubgraphError({
+            message: "Dispute manager not found"
+          })
+        }
+        return {
+          disputePeriod: BigInt(rawResult.graphNetworks[0].disputePeriod),
+          fishermanRewardCut: BigInt(rawResult.graphNetworks[0].fishermanRewardCut),
+          disputeDeposit: BigInt(rawResult.graphNetworks[0].minimumDisputeDeposit)
+        }
+      })
+
     return NetworkSubgraph.of({
       getGraphNetwork,
-      getSubgraphService
+      getSubgraphService,
+      getDisputeManager
     })
   })
 )

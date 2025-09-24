@@ -13,39 +13,56 @@ export const protocol = Command.make(
       const network = yield* NetworkService
       const horizonResult = yield* network.getGraphNetwork()
       const subgraphServiceResult = yield* network.getSubgraphService()
+      const disputeManagerResult = yield* network.getDisputeManager()
 
-      const allMismatches = [...horizonResult.mismatches, ...subgraphServiceResult.mismatches]
-
-      if (allMismatches.length > 0) {
-        yield* Display.error(`⚠️  CRITICAL: Found ${allMismatches.length} data mismatch(es) between RPC and Subgraph!`)
-        yield* Display.section("Data Mismatches Detected")
-        for (const mismatch of allMismatches) {
-          yield* Display.warning(`${mismatch.key}`)
-          yield* Display.keyValue("  RPC Value", String(mismatch.rpcValue))
-          yield* Display.keyValue("  Subgraph Value", String(mismatch.subgraphValue))
-        }
-        yield* Console.log("")
-      } else {
-        yield* Display.success("✅ All data sources match - validation successful!")
-      }
+      const allMismatches = [
+        ...horizonResult.mismatches,
+        ...subgraphServiceResult.mismatches,
+        ...disputeManagerResult.mismatches
+      ]
 
       yield* Display.section("Graph Horizon Details")
       yield* Display.bigNumber("Max Thawing Period", horizonResult.data.maxThawingPeriod)
       yield* Console.log("")
 
       yield* Display.section("Subgraph Service Details")
-      yield* Display.tokenValue("Minimum Provision Tokens", subgraphServiceResult.data.minimumProvisionTokens)
-      yield* Display.tokenValue("Maximum Provision Tokens", subgraphServiceResult.data.maximumProvisionTokens)
-      yield* Display.bigNumber("Minimum Verifier Cut", subgraphServiceResult.data.minimumVerifierCut)
-      yield* Display.bigNumber("Maximum Verifier Cut", subgraphServiceResult.data.maximumVerifierCut)
-      yield* Display.bigNumber("Minimum Thawing Period", subgraphServiceResult.data.minimumThawingPeriod)
-      yield* Display.bigNumber("Maximum Thawing Period", subgraphServiceResult.data.maximumThawingPeriod)
-      yield* Display.bigNumber("Max POI Staleness", subgraphServiceResult.data.maxPOIStaleness)
+      yield* Display.tokenRangeValue(
+        "Provision Token Range",
+        subgraphServiceResult.data.minimumProvisionTokens,
+        subgraphServiceResult.data.maximumProvisionTokens
+      )
+      yield* Display.ppmRangeValue(
+        "Verifier Cut Range",
+        subgraphServiceResult.data.minimumVerifierCut,
+        subgraphServiceResult.data.maximumVerifierCut
+      )
+      yield* Display.timeRangeValue(
+        "Thawing Period Range",
+        subgraphServiceResult.data.minimumThawingPeriod,
+        subgraphServiceResult.data.maximumThawingPeriod
+      )
+      yield* Display.timeValue("Max POI Staleness", subgraphServiceResult.data.maxPOIStaleness)
       yield* Display.bigNumber("Delegation Ratio", subgraphServiceResult.data.delegationRatio)
       yield* Display.bigNumber("Stake to Fees Ratio", subgraphServiceResult.data.stakeToFeesRatio)
-      yield* Display.bigNumber("Curation Cut", subgraphServiceResult.data.curationCut)
-      yield* Console.log("")
+      yield* Display.ppmValue("Curation Cut", subgraphServiceResult.data.curationCut)
 
+      yield* Display.section("Dispute Manager Details")
+      yield* Display.timeValue("Dispute Period", disputeManagerResult.data.disputePeriod)
+      yield* Display.ppmValue("Fisherman Reward Cut", disputeManagerResult.data.fishermanRewardCut)
+      yield* Display.tokenValue("Dispute Deposit", disputeManagerResult.data.disputeDeposit)
+
+      yield* Display.divider()
+
+      if (allMismatches.length > 0) {
+        yield* Display.error(`⚠️  CRITICAL: Found ${allMismatches.length} data mismatch(es) between RPC and Subgraph!`)
+        for (const mismatch of allMismatches) {
+          yield* Display.warning(`${mismatch.key}`)
+          yield* Display.keyValue("  RPC Value", String(mismatch.rpcValue))
+          yield* Display.keyValue("  Subgraph Value", String(mismatch.subgraphValue))
+        }
+      } else {
+        yield* Display.success("All data sources match - validation successful!")
+      }
       yield* Display.divider()
     }).pipe(
       Effect.catchAll((error) => {

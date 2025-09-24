@@ -1,0 +1,8 @@
+query DisputeManager {
+  graphNetworks {
+    disputePeriod
+    fishermanRewardCut
+    minimumDisputeDeposit
+  }
+}
+

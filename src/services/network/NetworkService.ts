@@ -5,6 +5,7 @@ import type { NetworkRPCError } from "./NetworkRPC.js"
 import { NetworkRPC } from "./NetworkRPC.js"
 import type { NetworkSubgraphError } from "./NetworkSubgraph.js"
 import { NetworkSubgraph } from "./NetworkSubgraph.js"
+import { DisputeManager } from "./schemas/DisputeManager.js"
 import { GraphNetwork } from "./schemas/GraphNetwork.js"
 import { SubgraphService } from "./schemas/SubgraphService.js"
 
@@ -24,6 +25,7 @@ export type NetworkServiceError = NetworkSubgraphError | NetworkRPCError | Parse
 export class NetworkService extends Context.Tag("NetworkService")<NetworkService, {
   getGraphNetwork: () => Effect.Effect<NetworkResult<GraphNetwork>, NetworkServiceError>
   getSubgraphService: () => Effect.Effect<NetworkResult<SubgraphService>, NetworkServiceError>
+  getDisputeManager: () => Effect.Effect<NetworkResult<DisputeManager>, NetworkServiceError>
 }>() {}
 
 export const NetworkServiceLive = Layer.effect(
@@ -64,9 +66,26 @@ export const NetworkServiceLive = Layer.effect(
         }
       })
 
+    const getDisputeManager = () =>
+      Effect.gen(function*() {
+        const [rpcData, subgraphData] = yield* Effect.all(
+          [rpc.getDisputeManager(), subgraph.getDisputeManager()],
+          { concurrency: "unbounded" }
+        )
+
+        const mismatches = findMismatches(rpcData, subgraphData)
+        const validatedData = yield* Schema.decodeUnknown(DisputeManager)(rpcData)
+
+        return {
+          data: validatedData,
+          mismatches
+        }
+      })
+
     return NetworkService.of({
       getGraphNetwork,
-      getSubgraphService
+      getSubgraphService,
+      getDisputeManager
     })
   })
 )

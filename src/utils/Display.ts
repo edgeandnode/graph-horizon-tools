@@ -72,13 +72,37 @@ export class Display {
   }
 
   static bigNumber(label: string, value: bigint): Effect.Effect<void, never> {
-    // Format big numbers with commas
-    const formatted = value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+    const formatted = bigintToString(value)
     return Display.keyValue(label, formatted)
   }
 
   static tokenValue(label: string, value: bigint): Effect.Effect<void, never> {
-    return Display.keyValue(label, ethers.formatEther(value))
+    return Display.keyValue(label, `${ethers.formatEther(value)} GRT`)
+  }
+
+  static timeValue(label: string, value: bigint): Effect.Effect<void, never> {
+    return Display.keyValue(label, `${formatTime(value)} (${value} seconds)`)
+  }
+
+  static ppmValue(label: string, value: bigint): Effect.Effect<void, never> {
+    const formatted = (value / 10_000n).toString()
+    return Display.keyValue(label, `${formatted}% (${value} ppm)`)
+  }
+
+  static rangeValue(label: string, min: bigint, max: bigint): Effect.Effect<void, never> {
+    return Display.keyValue(label, `[${bigintToString(min)} - ${bigintToString(max)}]`)
+  }
+
+  static tokenRangeValue(label: string, min: bigint, max: bigint): Effect.Effect<void, never> {
+    return Display.keyValue(label, `[${bigintToString(min, true)} - ${bigintToString(max, true)}]`)
+  }
+
+  static ppmRangeValue(label: string, min: bigint, max: bigint): Effect.Effect<void, never> {
+    return Display.keyValue(label, `[${(min / 10_000n).toString()}% - ${(max / 10_000n).toString()}%]`)
+  }
+
+  static timeRangeValue(label: string, min: bigint, max: bigint): Effect.Effect<void, never> {
+    return Display.keyValue(label, `[${formatTime(min)} - ${formatTime(max)}]`)
   }
 
   static spinner(message: string): Effect.Effect<void, never> {
@@ -86,6 +110,32 @@ export class Display {
   }
 
   static divider(): Effect.Effect<void, never> {
-    return Console.log(Display.colorize("▔".repeat(50), "dim"))
+    return Console.log("\n" + Display.colorize("▔".repeat(50), "dim"))
   }
+}
+
+function formatTime(seconds: bigint): string {
+  const oneDay = 24n * 60n * 60n
+  if (seconds < oneDay) {
+    const hours = seconds / 3600n
+    return `${hours} hour${hours === 1n ? "" : "s"}`
+  } else {
+    const days = seconds / oneDay
+    return `${days} day${days === 1n ? "" : "s"}`
+  }
+}
+
+function bigintToString(value: bigint, token: boolean = false): string {
+  const UINT32_MAX = (1n << 32n) - 1n // 2^32 - 1
+  const UINT64_MAX = (1n << 64n) - 1n // 2^64 - 1
+  const UINT128_MAX = (1n << 128n) - 1n // 2^128 - 1
+  const UINT256_MAX = (1n << 256n) - 1n // 2^256 - 1
+  if (value === UINT32_MAX) return "UINT32_MAX"
+  if (value === UINT64_MAX) return "UINT64_MAX"
+  if (value === UINT128_MAX) return "UINT128_MAX"
+  if (value === UINT256_MAX) return "UINT256_MAX"
+
+  return (token ?
+    `${ethers.formatEther(value)} GRT` :
+    value.toString()).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
 }

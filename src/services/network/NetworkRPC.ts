@@ -145,9 +145,53 @@ export const NetworkRPCLive = Layer.effect(
         }
       })
 
+    const getDisputeManager = () =>
+      Effect.gen(function*() {
+        const rawResult = yield* Effect.all(
+          {
+            disputePeriod: Effect.tryPromise({
+              try: () => subgraphServiceContracts.DisputeManager.disputePeriod(),
+
+              catch: (e) =>
+                new NetworkRPCError({
+                  message: `disputePeriod failed: ${String(e)}`,
+                  contract: "DisputeManager",
+                  method: "disputePeriod"
+                })
+            }),
+            fishermanRewardCut: Effect.tryPromise({
+              try: () => subgraphServiceContracts.DisputeManager.fishermanRewardCut(),
+              catch: (e) =>
+                new NetworkRPCError({
+                  message: `fishermanRewardCut failed: ${String(e)}`,
+                  contract: "DisputeManager",
+                  method: "fishermanRewardCut"
+                })
+            }),
+            disputeDeposit: Effect.tryPromise({
+              try: () => subgraphServiceContracts.DisputeManager.disputeDeposit(),
+              catch: (e) =>
+                new NetworkRPCError({
+                  message: `disputeDeposit failed: ${String(e)}`,
+                  contract: "DisputeManager",
+                  method: "disputeDeposit"
+                })
+            })
+          },
+          { concurrency: "unbounded" }
+        )
+
+        return {
+          disputePeriod: rawResult.disputePeriod,
+          fishermanRewardCut: rawResult.fishermanRewardCut,
+          disputeDeposit: rawResult.disputeDeposit
+        }
+      })
+
     return NetworkRPC.of({
       getGraphNetwork,
-      getSubgraphService
+      getSubgraphService,
+      getDisputeManager
     })
   })
 )

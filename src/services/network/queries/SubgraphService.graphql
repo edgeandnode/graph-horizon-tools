@@ -4,12 +4,14 @@ query SubgraphService {
     maximumProvisionTokens
     minimumVerifierCut
     maximumVerifierCut
-    minimumThawingPeriod
-    maximumThawingPeriod
     maxPOIStaleness
     delegationRatio
     stakeToFeesRatio
     curationCut
+  }
+  graphNetworks {
+    disputePeriod
+    fishermanRewardCut
   }
 }
 
