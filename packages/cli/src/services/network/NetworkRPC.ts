@@ -278,7 +278,7 @@ export const NetworkRPCLive = Layer.effect(
           id: address,
           url: rawResult.registrationData.url,
           geoHash: rawResult.registrationData.geoHash,
-          rewardsDestination: rawResult.rewardsDestination,
+          rewardsDestination: rawResult.rewardsDestination.toLowerCase(),
           stakedTokens: rawResult.serviceProvider.tokensStaked,
           delegatedTokens: rawResult.delegationPool.tokens,
           totalProvisionedTokens: rawResult.serviceProvider.tokensProvisioned,
