@@ -63,8 +63,8 @@ importers:
         specifier: ^0.75.5
         version: 0.75.5(effect@3.17.14)
       '@graphprotocol/toolshed':
-        specifier: ^0.6.16
-        version: 0.6.16(typescript@5.9.2)
+        specifier: ^1.0.1
+        version: 1.0.1(typescript@5.9.2)
       effect:
         specifier: ^3.17.7
         version: 3.17.14
@@ -573,14 +573,14 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@graphprotocol/address-book@0.1.0':
-    resolution: {integrity: sha512-QHtpxitV7YCjq8mXx6ruvbSKcwDNiWBFFRJKgAlTCJgebFdfxmovr1GzV8biFB1587gfYmfL8OEU9pafZq3n+g==}
+  '@graphprotocol/address-book@1.0.1':
+    resolution: {integrity: sha512-hI2OjEXAEiaGGS9Geb/HQyUmek0RVISwFL63U7ojmEa6mbtD7ZT4PAdWMp3KT5Q8s1OMY4WiE+ehUsJtkwVleA==}
 
   '@graphprotocol/interfaces@0.6.3':
     resolution: {integrity: sha512-B09TfRa6MweRGsnqTQwmxXHHCJiV4PXgYtBpKSF6Fn8rt8uhd9vDL3eml8yKD57rEZVzun/o5zRaNz7FiQrddw==}
 
-  '@graphprotocol/toolshed@0.6.16':
-    resolution: {integrity: sha512-baRmzwksBwwhgDhaQhtdeKBZtQMONs8nxJLqcLFaw9WckoBID0nN7wipf+Kj1aCM+Hj+x8HDZxf4O4pBUiB7IQ==}
+  '@graphprotocol/toolshed@1.0.1':
+    resolution: {integrity: sha512-cYVHZgWblKQFt3zV7Eh6GGui7TBJfAtn+h6JpRf05GV0toGPzfdDNpe3OIA4XOA+5WQAZfbpvkf+gDzlEldQGg==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -4003,13 +4003,13 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@graphprotocol/address-book@0.1.0': {}
+  '@graphprotocol/address-book@1.0.1': {}
 
   '@graphprotocol/interfaces@0.6.3': {}
 
-  '@graphprotocol/toolshed@0.6.16(typescript@5.9.2)':
+  '@graphprotocol/toolshed@1.0.1(typescript@5.9.2)':
     dependencies:
-      '@graphprotocol/address-book': 0.1.0
+      '@graphprotocol/address-book': 1.0.1
       '@graphprotocol/interfaces': 0.6.3
       '@nomicfoundation/hardhat-ethers': 3.0.8(ethers@6.13.7)(hardhat@2.26.3(typescript@5.9.2))
       debug: 4.4.3(supports-color@8.1.1)

@@ -25,15 +25,16 @@ export const NetworkRPCLive = Layer.effect(
         })
     })
     const chainId = Number(network.chainId)
+
     const horizonContracts = yield* Effect.try({
-      try: () => connectGraphHorizon(chainId, provider as any, "addresses.json"),
+      try: () => connectGraphHorizon(chainId, provider as any),
       catch: (error) =>
         new NetworkRPCError({
           message: `Failed to connect to Graph Horizon contracts: ${error}`
         })
     })
     const subgraphServiceContracts = yield* Effect.try({
-      try: () => connectSubgraphService(chainId, provider as any, "addresses.json"),
+      try: () => connectSubgraphService(chainId, provider as any),
       catch: (error) =>
         new NetworkRPCError({
           message: `Failed to connect to Subgraph Service contracts: ${error}`

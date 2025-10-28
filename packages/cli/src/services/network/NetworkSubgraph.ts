@@ -161,8 +161,14 @@ export const NetworkSubgraphlive = Layer.effect(
           })
         }
 
-        const legacyTokensAllocated = BigInt(rawResult.indexers[0].allocatedTokens) -
-          BigInt(rawResult.provisions[0].tokensAllocated)
+        const provisionExists = rawResult.provisions.length > 0
+        const provisionTokensAllocated = provisionExists ? BigInt(rawResult.provisions[0].tokensAllocated) : BigInt(0)
+        const provisionTokensThawing = provisionExists ? BigInt(rawResult.provisions[0].tokensThawing) : BigInt(0)
+        const provisionTokensProvisioned = provisionExists
+          ? BigInt(rawResult.provisions[0].tokensProvisioned)
+          : BigInt(0)
+
+        const legacyTokensAllocated = BigInt(rawResult.indexers[0].allocatedTokens) - provisionTokensAllocated
         const idleTokens = BigInt(rawResult.indexers[0].stakedTokens) -
           legacyTokensAllocated -
           BigInt(rawResult.indexers[0].legacyLockedTokens) -
@@ -178,9 +184,9 @@ export const NetworkSubgraphlive = Layer.effect(
           legacyTokensAllocated,
           legacyTokensLocked: BigInt(rawResult.indexers[0].legacyLockedTokens),
           idleTokens,
-          allocatedTokens: BigInt(rawResult.provisions[0].tokensAllocated),
-          thawingTokens: BigInt(rawResult.provisions[0].tokensThawing),
-          provisionedTokens: BigInt(rawResult.provisions[0].tokensProvisioned)
+          allocatedTokens: provisionTokensAllocated,
+          thawingTokens: provisionTokensThawing,
+          provisionedTokens: provisionTokensProvisioned
         }
       })
 
