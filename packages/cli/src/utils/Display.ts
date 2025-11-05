@@ -57,7 +57,7 @@ export class Display {
   }
 
   static keyValue(key: string, value: string | bigint | number): Effect.Effect<void, never> {
-    const formattedKey = Display.colorize(key.padEnd(20), "cyan")
+    const formattedKey = Display.colorize(key.padEnd(30), "cyan")
     const formattedValue = Display.colorize(String(value), "white")
     return Console.log(`  ${formattedKey} ${formattedValue}`)
   }
@@ -90,7 +90,7 @@ export class Display {
 
   static totalTokenValue(label: string, value: bigint): Effect.Effect<void, never> {
     const formattedValue = `${ethers.formatEther(value)} GRT`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-    const formattedKey = Display.boldColor(label.padEnd(20), "cyan")
+    const formattedKey = Display.boldColor(label.padEnd(30), "cyan")
     return Console.log(`  ${formattedKey} ${Display.bold(formattedValue)}`)
   }
 

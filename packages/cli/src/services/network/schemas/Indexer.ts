@@ -7,12 +7,15 @@ export const Indexer = Schema.Struct({
   rewardsDestination: Schema.String,
   stakedTokens: Schema.BigIntFromSelf,
   delegatedTokens: Schema.BigIntFromSelf,
+  delegatedThawingTokens: Schema.BigIntFromSelf,
   totalProvisionedTokens: Schema.BigIntFromSelf,
   legacyTokensAllocated: Schema.BigIntFromSelf,
   legacyTokensLocked: Schema.BigIntFromSelf,
   idleTokens: Schema.BigIntFromSelf,
+  availableTokens: Schema.BigIntFromSelf,
   provisionedTokens: Schema.BigIntFromSelf,
   allocatedTokens: Schema.BigIntFromSelf,
+  feesProvisionedTokens: Schema.BigIntFromSelf,
   thawingTokens: Schema.BigIntFromSelf
 })
 

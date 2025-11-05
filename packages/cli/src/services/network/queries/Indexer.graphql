@@ -9,6 +9,7 @@ query Indexer ($id: ID) {
         provisionedTokens
         legacyLockedTokens
         allocatedTokens
+        availableStake
     }
     provisions (where: { indexer_: { id: $id }}){
         tokensProvisioned

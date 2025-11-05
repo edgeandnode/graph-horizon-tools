@@ -26,29 +26,40 @@ export const indexer = Command.make(
       yield* Display.keyValue("Address", indexerResult.data.id)
 
       yield* Display.section("Stake Details")
-      yield* Display.tokenValue("Staked Tokens", indexerResult.data.stakedTokens)
-      yield* Display.tokenValue("Delegated Tokens", indexerResult.data.delegatedTokens)
+      yield* Display.totalTokenValue("Staked Tokens", indexerResult.data.stakedTokens)
+      yield* Display.tokenValue("• Legacy Tokens Locked", indexerResult.data.legacyTokensLocked)
+      yield* Display.tokenValue("• Legacy Tokens Allocated", indexerResult.data.legacyTokensAllocated)
+      yield* Display.tokenValue("• Idle Tokens", indexerResult.data.idleTokens)
+      yield* Display.tokenValue("• Provisioned Tokens", indexerResult.data.provisionedTokens)
+
+      yield* Display.section("Subgraph Service - Provisioned stake")
       yield* Display.totalTokenValue(
         "Total Tokens",
-        indexerResult.data.stakedTokens + indexerResult.data.delegatedTokens
+        indexerResult.data.provisionedTokens + indexerResult.data.delegatedTokens
       )
-
-      yield* Display.section("Stake Usage Details")
-      yield* Display.tokenValue("Legacy Tokens Allocated", indexerResult.data.legacyTokensAllocated)
-      yield* Display.tokenValue("Legacy Tokens Locked", indexerResult.data.legacyTokensLocked)
-      yield* Display.tokenValue("Provisioned Tokens", indexerResult.data.provisionedTokens)
-      yield* Display.totalTokenValue("Idle Tokens", indexerResult.data.idleTokens)
-
+      yield* Display.tokenValue("• Provisioned Tokens", indexerResult.data.provisionedTokens)
+      yield* Display.tokenValue("• Delegated Tokens", indexerResult.data.delegatedTokens)
       yield* Display.totalTokenValue(
-        "Total Tokens Used",
-        indexerResult.data.legacyTokensAllocated + indexerResult.data.legacyTokensLocked +
-          indexerResult.data.provisionedTokens
+        "Total Tokens",
+        indexerResult.data.provisionedTokens + indexerResult.data.delegatedTokens
       )
+      yield* Display.tokenValue("• Available Tokens", indexerResult.data.availableTokens)
+      yield* Display.tokenValue("• Thawing Tokens", indexerResult.data.thawingTokens)
+      yield* Display.tokenValue("• Delegated Thawing Tokens", indexerResult.data.delegatedThawingTokens)
 
-      yield* Display.section("Subgraph Service - Provision Details")
-      yield* Display.tokenValue("Provisioned Tokens", indexerResult.data.provisionedTokens)
-      yield* Display.tokenValue("Allocated Tokens", indexerResult.data.allocatedTokens)
-      yield* Display.tokenValue("Thawing Tokens", indexerResult.data.thawingTokens)
+      yield* Display.section("Subgraph Service - Available stake utilization")
+      yield* Display.totalTokenValue("Allocation tracker", indexerResult.data.availableTokens)
+      yield* Display.tokenValue(
+        "• Tokens free",
+        indexerResult.data.availableTokens - indexerResult.data.allocatedTokens
+      )
+      yield* Display.tokenValue("• Allocated Tokens", indexerResult.data.allocatedTokens)
+      yield* Display.totalTokenValue("Query fee tracker", indexerResult.data.availableTokens)
+      yield* Display.tokenValue(
+        "• Tokens free",
+        indexerResult.data.availableTokens - indexerResult.data.feesProvisionedTokens
+      )
+      yield* Display.tokenValue("• Stake claims Tokens", indexerResult.data.feesProvisionedTokens)
 
       yield* Display.section("Subgraph Service - Registration Details")
       yield* Display.keyValue("URL", indexerResult.data.url)

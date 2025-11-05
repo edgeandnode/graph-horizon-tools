@@ -252,6 +252,15 @@ export const NetworkRPCLive = Layer.effect(
                   method: "allocationProvisionTracker"
                 })
             }),
+            feesProvisionTracker: Effect.tryPromise({
+              try: () => subgraphServiceContracts.SubgraphService.feesProvisionTracker(address),
+              catch: (e) =>
+                new NetworkRPCError({
+                  message: `feesProvisionTracker failed: ${String(e)}`,
+                  contract: "SubgraphService",
+                  method: "feesProvisionTracker"
+                })
+            }),
             legacyData: Effect.tryPromise({
               try: () => getLegacyData(provider, horizonContracts.HorizonStaking.target.toString(), address),
               catch: (e) =>
@@ -269,6 +278,20 @@ export const NetworkRPCLive = Layer.effect(
                   contract: "HorizonStaking",
                   method: "getIdleStake"
                 })
+            }),
+            availableTokens: Effect.tryPromise({
+              try: () =>
+                horizonContracts.HorizonStaking.getTokensAvailable(
+                  address,
+                  subgraphServiceContracts.SubgraphService.target,
+                  16
+                ),
+              catch: (e) =>
+                new NetworkRPCError({
+                  message: `availableTokens failed: ${String(e)}`,
+                  contract: "HorizonStaking",
+                  method: "getTokensAvailable"
+                })
             })
           },
           { concurrency: "unbounded" }
@@ -281,12 +304,15 @@ export const NetworkRPCLive = Layer.effect(
           rewardsDestination: rawResult.rewardsDestination.toLowerCase(),
           stakedTokens: rawResult.serviceProvider.tokensStaked,
           delegatedTokens: rawResult.delegationPool.tokens,
+          delegatedThawingTokens: rawResult.delegationPool.tokensThawing,
           totalProvisionedTokens: rawResult.serviceProvider.tokensProvisioned,
           legacyTokensAllocated: rawResult.legacyData.tokensAllocated,
           legacyTokensLocked: rawResult.legacyData.tokensLocked,
           idleTokens: rawResult.idleTokens,
+          availableTokens: rawResult.availableTokens,
           provisionedTokens: rawResult.provision.tokens,
           allocatedTokens: rawResult.allocationProvisionTracker,
+          feesProvisionedTokens: rawResult.feesProvisionTracker,
           thawingTokens: rawResult.provision.tokensThawing
         }
       })

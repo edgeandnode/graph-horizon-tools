@@ -180,11 +180,14 @@ export const NetworkSubgraphlive = Layer.effect(
           rewardsDestination: rawResult.indexers[0].rewardsDestination,
           stakedTokens: BigInt(rawResult.indexers[0].stakedTokens),
           delegatedTokens: BigInt(rawResult.indexers[0].delegatedTokens),
+          delegatedThawingTokens: BigInt(0),
           totalProvisionedTokens: BigInt(rawResult.indexers[0].provisionedTokens),
           legacyTokensAllocated,
           legacyTokensLocked: BigInt(rawResult.indexers[0].legacyLockedTokens),
           idleTokens,
+          availableTokens: BigInt(rawResult.indexers[0].availableStake),
           allocatedTokens: provisionTokensAllocated,
+          feesProvisionedTokens: BigInt(0),
           thawingTokens: provisionTokensThawing,
           provisionedTokens: provisionTokensProvisioned
         }
