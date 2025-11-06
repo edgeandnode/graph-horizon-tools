@@ -307,7 +307,7 @@ export const NetworkRPCLive = Layer.effect(
           delegatedThawingTokens: rawResult.delegationPool.tokensThawing,
           totalProvisionedTokens: rawResult.serviceProvider.tokensProvisioned,
           legacyTokensAllocated: rawResult.legacyData.tokensAllocated,
-          legacyTokensLocked: rawResult.legacyData.tokensLocked,
+          tokensLocked: rawResult.legacyData.tokensLocked,
           idleTokens: rawResult.idleTokens,
           availableTokens: rawResult.availableTokens,
           provisionedTokens: rawResult.provision.tokens,

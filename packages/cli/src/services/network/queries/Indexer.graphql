@@ -7,7 +7,7 @@ query Indexer ($id: ID) {
         stakedTokens
         delegatedTokens
         provisionedTokens
-        legacyLockedTokens
+        lockedTokens
         allocatedTokens
         availableStake
     }

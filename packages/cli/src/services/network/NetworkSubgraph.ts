@@ -171,7 +171,7 @@ export const NetworkSubgraphlive = Layer.effect(
         const legacyTokensAllocated = BigInt(rawResult.indexers[0].allocatedTokens) - provisionTokensAllocated
         const idleTokens = BigInt(rawResult.indexers[0].stakedTokens) -
           legacyTokensAllocated -
-          BigInt(rawResult.indexers[0].legacyLockedTokens) -
+          BigInt(rawResult.indexers[0].lockedTokens) -
           BigInt(rawResult.indexers[0].provisionedTokens)
         return {
           id: rawResult.indexers[0].id,
@@ -183,7 +183,7 @@ export const NetworkSubgraphlive = Layer.effect(
           delegatedThawingTokens: BigInt(0),
           totalProvisionedTokens: BigInt(rawResult.indexers[0].provisionedTokens),
           legacyTokensAllocated,
-          legacyTokensLocked: BigInt(rawResult.indexers[0].legacyLockedTokens),
+          tokensLocked: BigInt(rawResult.indexers[0].lockedTokens),
           idleTokens,
           availableTokens: BigInt(rawResult.indexers[0].availableStake),
           allocatedTokens: provisionTokensAllocated,

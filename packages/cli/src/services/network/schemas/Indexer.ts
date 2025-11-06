@@ -10,7 +10,7 @@ export const Indexer = Schema.Struct({
   delegatedThawingTokens: Schema.BigIntFromSelf,
   totalProvisionedTokens: Schema.BigIntFromSelf,
   legacyTokensAllocated: Schema.BigIntFromSelf,
-  legacyTokensLocked: Schema.BigIntFromSelf,
+  tokensLocked: Schema.BigIntFromSelf,
   idleTokens: Schema.BigIntFromSelf,
   availableTokens: Schema.BigIntFromSelf,
   provisionedTokens: Schema.BigIntFromSelf,

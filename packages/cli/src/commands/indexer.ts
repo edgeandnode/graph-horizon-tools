@@ -27,7 +27,7 @@ export const indexer = Command.make(
 
       yield* Display.section("Stake Details")
       yield* Display.totalTokenValue("Staked Tokens", indexerResult.data.stakedTokens)
-      yield* Display.tokenValue("• Legacy Tokens Locked", indexerResult.data.legacyTokensLocked)
+      yield* Display.tokenValue("• Legacy Tokens Locked", indexerResult.data.tokensLocked)
       yield* Display.tokenValue("• Legacy Tokens Allocated", indexerResult.data.legacyTokensAllocated)
       yield* Display.tokenValue("• Idle Tokens", indexerResult.data.idleTokens)
       yield* Display.tokenValue("• Provisioned Tokens", indexerResult.data.provisionedTokens)
