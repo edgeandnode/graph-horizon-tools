@@ -57,7 +57,7 @@ export const indexer = Command.make(
       yield* Display.totalTokenValue("Query fee tracker", indexerResult.data.availableTokens)
       yield* Display.tokenValue(
         "• Tokens free",
-        indexerResult.data.availableTokens - indexerResult.data.feesProvisionedTokens
+        indexerResult.data.tokensFree
       )
       yield* Display.tokenValue("• Stake claims Tokens", indexerResult.data.feesProvisionedTokens)
 

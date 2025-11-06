@@ -16,7 +16,8 @@ export const Indexer = Schema.Struct({
   provisionedTokens: Schema.BigIntFromSelf,
   allocatedTokens: Schema.BigIntFromSelf,
   feesProvisionedTokens: Schema.BigIntFromSelf,
-  thawingTokens: Schema.BigIntFromSelf
+  thawingTokens: Schema.BigIntFromSelf,
+  tokensFree: Schema.BigIntFromSelf
 })
 
 export const IndexerSubgraphResponse = Schema.Struct({

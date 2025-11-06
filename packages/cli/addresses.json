@@ -40,7 +40,7 @@
             "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F"
         },
         "HorizonStaking": {
-            "address": "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
+            "address": "0xc5a5C42992dECbae36851359345FE25997F5C42d",
             "proxy": "graph",
             "implementation": "0x5081a39b8A5f0E35a8D959395a630b68B74Dd30f"
         },
@@ -60,7 +60,7 @@
             "address": "0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07"
         },
         "SubgraphService": {
-            "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "address": "0xBEc49fA140aCaA83533fB00A2BB19bDdd0290f25",
             "proxy": "transparent",
             "proxyAdmin": "0xd8058efe0198ae9dD7D563e1b4938Dcbc86A1F81",
             "implementation": "0x51A1ceB83B83F1985a81C295d1fF28Afef186E02"
