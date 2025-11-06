@@ -1,6 +1,6 @@
 import * as Command from "@effect/cli/Command"
 import { Console, Effect, Layer } from "effect"
-import { config, indexer, protocol } from "./commands/index.js"
+import { config, indexer, migration, protocol } from "./commands/index.js"
 import { ConfigServiceLive } from "./services/ConfigService.js"
 import { NetworkRPCLive } from "./services/network/NetworkRPC.js"
 import { NetworkServiceLive } from "./services/network/NetworkService.js"
@@ -24,7 +24,7 @@ const command = Command.make("horizon", {
   args: {}
 }).pipe(
   Command.withDescription("Graph Horizon CLI application - The Graph protocol at a glance."),
-  Command.withSubcommands([config, protocol, indexer])
+  Command.withSubcommands([config, protocol, indexer, migration])
 )
 
 export const run = (args: ReadonlyArray<string>) =>

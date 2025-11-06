@@ -1,0 +1,14 @@
+query IndexerList {
+    indexers {
+        id
+        url
+        allocations {
+            createdAt
+        }
+    }
+    provisions {
+        indexer {
+            id
+        }
+    }
+}

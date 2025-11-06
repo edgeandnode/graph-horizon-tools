@@ -62,6 +62,13 @@ export class Display {
     return Console.log(`  ${formattedKey} ${formattedValue}`)
   }
 
+  static tripleString(first: string, second: string, third: string): Effect.Effect<void, never> {
+    const formattedFirst = Display.colorize(first.padEnd(30), "cyan")
+    const formattedSecond = Display.colorize(second.padEnd(6), "blue")
+    const formattedThird = Display.colorize(third.padEnd(30), "white")
+    return Console.log(`  ${formattedFirst} ${formattedSecond} ${formattedThird}`)
+  }
+
   static section(title: string): Effect.Effect<void, never> {
     return Effect.gen(function*() {
       yield* Console.log("")

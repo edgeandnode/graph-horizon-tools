@@ -15,7 +15,11 @@ export class NetworkSubgraphError extends Data.TaggedError("NetworkSubgraphError
   variables?: unknown
 }> {}
 
-export class NetworkSubgraph extends Context.Tag("NetworkSubgraph")<NetworkSubgraph, NetworkDataSource>() {
+type ExtendedNetworkDataSource = NetworkDataSource & {
+  getIndexerList: () => Effect.Effect<IndexerSubgraphResponse, NetworkSubgraphError>
+}
+
+export class NetworkSubgraph extends Context.Tag("NetworkSubgraph")<NetworkSubgraph, ExtendedNetworkDataSource>() {
   static loadQuery(queryName: string) {
     return Effect.sync(() => {
       const queriesDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "queries")
@@ -193,11 +197,24 @@ export const NetworkSubgraphlive = Layer.effect(
         }
       })
 
+    const getIndexerList = () =>
+      Effect.gen(function*() {
+        const queryData = yield* NetworkSubgraph.loadQuery("IndexerList")
+        const rawResult = (yield* query(queryData)) as IndexerSubgraphResponse
+        if (!rawResult.indexers) {
+          throw new NetworkSubgraphError({
+            message: "Indexer list not found"
+          })
+        }
+        return rawResult
+      })
+
     return NetworkSubgraph.of({
       getGraphNetwork,
       getSubgraphService,
       getDisputeManager,
-      getIndexer
+      getIndexer,
+      getIndexerList
     })
   })
 )
