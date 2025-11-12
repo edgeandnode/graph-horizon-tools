@@ -1,8 +1,10 @@
 import * as Args from "@effect/cli/Args"
 import * as Command from "@effect/cli/Command"
 import { Console, Effect } from "effect"
+import { ConfigService } from "../services/ConfigService.js"
 import { NetworkService } from "../services/network/NetworkService.js"
 import { Display } from "../utils/Display.js"
+import { fetchIndexerVersion } from "./migration.js"
 
 export const indexer = Command.make(
   "indexer",
@@ -15,8 +17,13 @@ export const indexer = Command.make(
     Effect.gen(function*() {
       yield* Display.header("Graph Protocol Indexer")
 
+      const config = yield* ConfigService
       const network = yield* NetworkService
       const indexerResult = yield* network.getIndexer(address.toLowerCase())
+      const version = yield* fetchIndexerVersion(indexerResult.data).pipe(
+        Effect.map((response) => JSON.parse(response).version),
+        Effect.catchAll(() => Effect.succeed("Unreachable"))
+      )
 
       const allMismatches = [
         ...indexerResult.mismatches
@@ -61,8 +68,14 @@ export const indexer = Command.make(
       )
       yield* Display.tokenValue("• Stake claims Tokens", indexerResult.data.feesProvisionedTokens)
 
+      yield* Display.section("Escrow Account Details")
+      yield* Display.keyValue("• Gateway Payer", config.gatewayPayer)
+      yield* Display.tokenValue("• Balance", indexerResult.data.escrowAccountBalance)
+      yield* Display.tokenValue("• Tokens Thawing", indexerResult.data.escrowAccountTokensThawing)
+
       yield* Display.section("Subgraph Service - Registration Details")
       yield* Display.keyValue("URL", indexerResult.data.url)
+      yield* Display.keyValue("Indexer Service Version", version)
       yield* Display.keyValue("Geo Hash", indexerResult.data.geoHash)
       yield* Display.keyValue("Rewards Destination", indexerResult.data.rewardsDestination)
       yield* Display.divider()

@@ -1,4 +1,6 @@
+import { connectGraphHorizon } from "@graphprotocol/toolshed/deployments"
 import { Context, Data, Effect, Layer } from "effect"
+import { JsonRpcProvider } from "ethers"
 import * as fs from "node:fs"
 import * as path from "node:path"
 import { fileURLToPath } from "node:url"
@@ -157,8 +159,28 @@ export const NetworkSubgraphlive = Layer.effect(
 
     const getIndexer = (address: string) =>
       Effect.gen(function*() {
+        const config = yield* ConfigService
+        const provider = new JsonRpcProvider(config.rpcUrl)
+        const network = yield* Effect.tryPromise({
+          try: () => provider.getNetwork(),
+          catch: (error) =>
+            new NetworkSubgraphError({
+              message: `Failed to get network info: ${error}`
+            })
+        })
+        const chainId = Number(network.chainId)
+        const horizonContracts = yield* Effect.try({
+          try: () => connectGraphHorizon(chainId, provider as any),
+          catch: (error) =>
+            new NetworkSubgraphError({
+              message: `Failed to connect to Graph Horizon contracts: ${error}`
+            })
+        })
         const queryData = yield* NetworkSubgraph.loadQuery("Indexer")
-        const rawResult = (yield* query(queryData, { id: address.toLowerCase() })) as IndexerSubgraphResponse
+        const rawResult = (yield* query(queryData, {
+          id: address.toLowerCase(),
+          collector: horizonContracts.GraphTallyCollector.target.toString().toLowerCase()
+        })) as IndexerSubgraphResponse
         if (!rawResult.indexers) {
           throw new NetworkSubgraphError({
             message: "Indexer not found"
@@ -194,7 +216,10 @@ export const NetworkSubgraphlive = Layer.effect(
           feesProvisionedTokens: BigInt(0),
           thawingTokens: provisionTokensThawing,
           provisionedTokens: provisionTokensProvisioned,
-          tokensFree: BigInt(rawResult.indexers[0].availableStake)
+          tokensFree: BigInt(rawResult.indexers[0].availableStake),
+          escrowAccountBalance: BigInt(rawResult.paymentsEscrowAccounts[0].balance),
+          escrowAccountTokensThawing: BigInt(rawResult.paymentsEscrowAccounts[0].totalAmountThawing),
+          escrowAccountThawEndTimestamp: BigInt(rawResult.paymentsEscrowAccounts[0].thawEndTimestamp)
         }
       })
 
@@ -214,6 +239,7 @@ export const NetworkSubgraphlive = Layer.effect(
       getGraphNetwork,
       getSubgraphService,
       getDisputeManager,
+      // @ts-ignore - TODO: Fix this
       getIndexer,
       getIndexerList
     })

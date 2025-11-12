@@ -17,12 +17,16 @@ export const Indexer = Schema.Struct({
   allocatedTokens: Schema.BigIntFromSelf,
   feesProvisionedTokens: Schema.BigIntFromSelf,
   thawingTokens: Schema.BigIntFromSelf,
-  tokensFree: Schema.BigIntFromSelf
+  tokensFree: Schema.BigIntFromSelf,
+  escrowAccountBalance: Schema.BigIntFromSelf,
+  escrowAccountTokensThawing: Schema.BigIntFromSelf,
+  escrowAccountThawEndTimestamp: Schema.BigIntFromSelf
 })
 
 export const IndexerSubgraphResponse = Schema.Struct({
   indexers: Schema.Array(Schema.Any),
-  provisions: Schema.Array(Schema.Any)
+  provisions: Schema.Array(Schema.Any),
+  paymentsEscrowAccounts: Schema.Array(Schema.Any)
 })
 
 export type Indexer = Schema.Schema.Type<typeof Indexer>

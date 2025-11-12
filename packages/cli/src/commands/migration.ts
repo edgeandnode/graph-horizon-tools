@@ -5,7 +5,7 @@ import { Display } from "../utils/Display.js"
 
 const HORIZON_VERSION = "1.7.0"
 
-const fetchIndexerVersion = (indexer: { url: string }) =>
+export const fetchIndexerVersion = (indexer: { url: string }) =>
   Effect.tryPromise({
     try: async () => {
       const url = new URL(indexer.url)

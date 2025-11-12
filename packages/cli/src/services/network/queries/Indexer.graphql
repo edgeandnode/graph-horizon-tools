@@ -1,4 +1,4 @@
-query Indexer ($id: ID) {
+query Indexer ($id: ID, $collector: ID) {
     indexers(where: { id: $id }) {
         id
         url
@@ -16,5 +16,16 @@ query Indexer ($id: ID) {
         tokensProvisioned
         tokensAllocated
         tokensThawing
+    }
+    paymentsEscrowAccounts(
+        where: {
+        receiver_: { id: $id },
+        collector: $collector
+        }
+    ) {
+        payer { id }
+        balance
+        totalAmountThawing
+        thawEndTimestamp
     }
 }

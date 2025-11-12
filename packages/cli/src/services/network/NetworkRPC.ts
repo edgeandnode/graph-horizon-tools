@@ -292,6 +292,20 @@ export const NetworkRPCLive = Layer.effect(
                   contract: "HorizonStaking",
                   method: "getTokensAvailable"
                 })
+            }),
+            escrowAccount: Effect.tryPromise({
+              try: () =>
+                horizonContracts.PaymentsEscrow.escrowAccounts(
+                  config.gatewayPayer,
+                  horizonContracts.GraphTallyCollector.target,
+                  address
+                ),
+              catch: (e) =>
+                new NetworkRPCError({
+                  message: `escrowAccounts failed: ${String(e)}`,
+                  contract: "PaymentsEscrow",
+                  method: "escrowAccounts"
+                })
             })
           },
           { concurrency: "unbounded" }
@@ -314,7 +328,10 @@ export const NetworkRPCLive = Layer.effect(
           allocatedTokens: rawResult.allocationProvisionTracker,
           feesProvisionedTokens: rawResult.feesProvisionTracker,
           thawingTokens: rawResult.provision.tokensThawing,
-          tokensFree: rawResult.availableTokens - rawResult.allocationProvisionTracker
+          tokensFree: rawResult.availableTokens - rawResult.allocationProvisionTracker,
+          escrowAccountBalance: rawResult.escrowAccount.balance,
+          escrowAccountTokensThawing: rawResult.escrowAccount.tokensThawing,
+          escrowAccountThawEndTimestamp: rawResult.escrowAccount.thawEndTimestamp
         }
       })
 
