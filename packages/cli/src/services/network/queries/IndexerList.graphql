@@ -1,12 +1,12 @@
 query IndexerList {
-    indexers {
+    indexers(first: 1000) {
         id
         url
         allocations {
             createdAt
         }
     }
-    provisions {
+    provisions(first: 1000) {
         indexer {
             id
         }

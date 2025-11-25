@@ -42,7 +42,7 @@ export const migration = Command.make(
       )
 
       const indexersPendingMigration = activeIndexers.filter((indexer) =>
-        indexerListResult.provisions.some((provision) => provision.indexer.id === indexer.id)
+        !indexerListResult.provisions.some((provision) => provision.indexer.id === indexer.id)
       )
 
       const indexersWithNoURL = activeIndexers.filter((indexer) =>
@@ -96,8 +96,31 @@ export const migration = Command.make(
       )
 
       yield* Display.section("Active indexers details")
-      for (const indexer of activeIndexersWithVersions) {
-        yield* Display.tripleString(indexer.id, indexer.version ?? "N/A", indexer.url ?? "N/A")
+
+      // Group indexers by version
+      const indexersByVersion = activeIndexersWithVersions.reduce((acc, indexer) => {
+        const version = indexer.version ?? "N/A"
+        if (!acc[version]) {
+          acc[version] = []
+        }
+        acc[version].push(indexer)
+        return acc
+      }, {} as Record<string, typeof activeIndexersWithVersions>)
+
+      // Sort versions (N/A last, then descending version order)
+      const sortedVersions = Object.keys(indexersByVersion).sort((a, b) => {
+        if (a === "N/A") return 1
+        if (b === "N/A") return -1
+        return compareVersions(b, a) // descending order
+      })
+
+      // Display grouped by version
+      for (const version of sortedVersions) {
+        const indexers = indexersByVersion[version]
+        yield* Console.log(`\n  Version ${version} (${indexers.length} indexer${indexers.length === 1 ? "" : "s"}):`)
+        for (const indexer of indexers) {
+          yield* Display.tripleString(indexer.id, "", indexer.url ?? "N/A")
+        }
       }
     }).pipe(
       Effect.catchAll((error) => {
