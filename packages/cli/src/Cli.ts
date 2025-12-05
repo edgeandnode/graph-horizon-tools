@@ -5,11 +5,13 @@ import { ConfigServiceLive } from "./services/ConfigService.js"
 import { NetworkRPCLive } from "./services/network/NetworkRPC.js"
 import { NetworkServiceLive } from "./services/network/NetworkService.js"
 import { NetworkSubgraphlive } from "./services/network/NetworkSubgraph.js"
+import { QoSSubgraphLive } from "./services/qos/QoSSubgraph.js"
 
 const AppLayer = Layer.mergeAll(
   ConfigServiceLive,
   NetworkSubgraphlive.pipe(Layer.provide(ConfigServiceLive)),
   NetworkRPCLive.pipe(Layer.provide(ConfigServiceLive)),
+  QoSSubgraphLive.pipe(Layer.provide(ConfigServiceLive)),
   NetworkServiceLive.pipe(
     Layer.provide(
       Layer.mergeAll(
