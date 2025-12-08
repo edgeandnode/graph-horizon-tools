@@ -1,9 +1,11 @@
 import * as Command from "@effect/cli/Command"
 import { Console, Effect } from "effect"
 import { NetworkSubgraph } from "../services/network/NetworkSubgraph.js"
+import { QoSSubgraph } from "../services/qos/QoSSubgraph.js"
 import { Display } from "../utils/Display.js"
 
 const HORIZON_VERSION = "1.7.0"
+const TEN_DAYS_IN_SECONDS = 10 * 24 * 60 * 60
 
 export const fetchIndexerVersion = (indexer: { url: string }) =>
   Effect.tryPromise({
@@ -95,6 +97,72 @@ export const migration = Command.make(
         reachableActiveIndexers.filter((indexer) => compareVersions(indexer.version, HORIZON_VERSION) >= 0).length
       )
 
+      // Query volume coverage analysis
+      const qos = yield* QoSSubgraph
+      const tenDaysAgo = Math.floor(Date.now() / 1000) - TEN_DAYS_IN_SECONDS
+      const dailyData = yield* qos.getIndexerDailyData(tenDaysAgo)
+
+      // Create a set of Horizon indexer IDs (version >= 1.7.0)
+      const horizonIndexerIds = new Set(
+        reachableActiveIndexers
+          .filter((indexer) => compareVersions(indexer.version, HORIZON_VERSION) >= 0)
+          .map((indexer) => indexer.id.toLowerCase())
+      )
+
+      // Calculate query volume by day and by indexer
+      const volumeByDay = new Map<string, { total: bigint; horizon: bigint }>()
+      const volumeByIndexer = new Map<string, bigint>()
+      let grandTotalQueries = BigInt(0)
+
+      for (const dataPoint of dailyData.indexerDailyDataPoints) {
+        const day = dataPoint.dayStart
+        const queryCount = BigInt(dataPoint.query_count)
+        const indexerId = dataPoint.indexer.id.toLowerCase()
+
+        // Track by day
+        if (!volumeByDay.has(day)) {
+          volumeByDay.set(day, { total: BigInt(0), horizon: BigInt(0) })
+        }
+
+        const dayData = volumeByDay.get(day)!
+        dayData.total += queryCount
+        if (horizonIndexerIds.has(indexerId)) {
+          dayData.horizon += queryCount
+        }
+
+        // Track by indexer
+        volumeByIndexer.set(indexerId, (volumeByIndexer.get(indexerId) ?? BigInt(0)) + queryCount)
+        grandTotalQueries += queryCount
+      }
+
+      // Sort days and display
+      const sortedDays = Array.from(volumeByDay.keys()).sort((a, b) => Number(a) - Number(b))
+
+      yield* Display.section("Query volume coverage (last 10 days)")
+
+      let totalQueries = BigInt(0)
+      let horizonQueries = BigInt(0)
+
+      for (const day of sortedDays) {
+        const dayData = volumeByDay.get(day)!
+        totalQueries += dayData.total
+        horizonQueries += dayData.horizon
+
+        const date = new Date(Number(day) * 1000).toISOString().split("T")[0]
+        const percentage = dayData.total > 0
+          ? ((Number(dayData.horizon) / Number(dayData.total)) * 100).toFixed(2)
+          : "0.00"
+        yield* Display.keyValue(
+          `  ${date}`,
+          `${percentage}% (${formatNumber(dayData.horizon)} / ${formatNumber(dayData.total)})`
+        )
+      }
+
+      const overallPercentage = totalQueries > 0
+        ? ((Number(horizonQueries) / Number(totalQueries)) * 100).toFixed(2)
+        : "0.00"
+      yield* Display.keyValue("Overall", `${overallPercentage}% horizon coverage`)
+
       yield* Display.section("Active indexers details")
 
       // Group indexers by version
@@ -114,12 +182,32 @@ export const migration = Command.make(
         return compareVersions(b, a) // descending order
       })
 
-      // Display grouped by version
+      // Display grouped by version with query volume
       for (const version of sortedVersions) {
         const indexers = indexersByVersion[version]
-        yield* Console.log(`\n  Version ${version} (${indexers.length} indexer${indexers.length === 1 ? "" : "s"}):`)
+        // Calculate total volume for this version
+        const versionVolume = indexers.reduce((acc, indexer) => {
+          return acc + (volumeByIndexer.get(indexer.id.toLowerCase()) ?? BigInt(0))
+        }, BigInt(0))
+        const versionPercentage = grandTotalQueries > 0
+          ? ((Number(versionVolume) / Number(grandTotalQueries)) * 100).toFixed(2)
+          : "0.00"
+
+        yield* Console.log(
+          `\n  Version ${version} (${indexers.length} indexer${
+            indexers.length === 1 ? "" : "s"
+          }) - ${versionPercentage}% of queries:`
+        )
         for (const indexer of indexers) {
-          yield* Display.tripleString(indexer.id, "", indexer.url ?? "N/A")
+          const indexerVolume = volumeByIndexer.get(indexer.id.toLowerCase()) ?? BigInt(0)
+          const volumePercentage = grandTotalQueries > 0
+            ? ((Number(indexerVolume) / Number(grandTotalQueries)) * 100).toFixed(2)
+            : "0.00"
+          yield* Display.tripleString(
+            indexer.id,
+            `${volumePercentage}%`,
+            indexer.url ?? "N/A"
+          )
         }
       }
     }).pipe(
@@ -133,6 +221,10 @@ export const migration = Command.make(
 ).pipe(
   Command.withDescription("Fetch migration data for horizon upgrade")
 )
+
+function formatNumber(n: bigint): string {
+  return n.toLocaleString()
+}
 
 function parseVersion(v: string) {
   return v.split(".").map(Number)
