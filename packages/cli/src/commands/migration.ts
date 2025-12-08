@@ -3,7 +3,7 @@ import * as Options from "@effect/cli/Options"
 import { Console, Effect, Schedule } from "effect"
 import { NetworkSubgraph } from "../services/network/NetworkSubgraph.js"
 import { QoSSubgraph } from "../services/qos/QoSSubgraph.js"
-import { Display, blue, green } from "../utils/Display.js"
+import { blue, Display, green } from "../utils/Display.js"
 
 const HORIZON_VERSION = "1.7.0"
 const TEN_DAYS_IN_SECONDS = 10 * 24 * 60 * 60
@@ -131,8 +131,8 @@ export const migration = Command.make(
       )
 
       // Query volume data (fetch if QoS is configured)
-      let volumeByIndexer = new Map<string, bigint>()
-      let volumeByDay = new Map<string, { total: bigint; horizon: bigint }>()
+      const volumeByIndexer = new Map<string, bigint>()
+      const volumeByDay = new Map<string, { total: bigint; horizon: bigint }>()
       let grandTotalQueries = BigInt(0)
 
       if (qosConfigured) {
@@ -199,8 +199,8 @@ export const migration = Command.make(
       // Filter indexers if --migrated-only flag is set (version >= 1.7.0)
       const indexersToDisplay = migratedOnly
         ? activeIndexersWithVersions.filter((indexer) =>
-            indexer.version !== null && compareVersions(indexer.version, HORIZON_VERSION) >= 0
-          )
+          indexer.version !== null && compareVersions(indexer.version, HORIZON_VERSION) >= 0
+        )
         : activeIndexersWithVersions
 
       // Group indexers by version
@@ -244,9 +244,9 @@ export const migration = Command.make(
           : "N/A"
 
         yield* Console.log(
-          `\n  Version ${version} (${indexers.length} indexer${
-            indexers.length === 1 ? "" : "s"
-          }) - ${blue(versionQueryPct)}  ${green(versionStakePct)}:`
+          `\n  Version ${version} (${indexers.length} indexer${indexers.length === 1 ? "" : "s"}) - ${
+            blue(versionQueryPct)
+          }  ${green(versionStakePct)}:`
         )
 
         for (const indexer of indexers) {
