@@ -1,11 +1,14 @@
 import * as Command from "@effect/cli/Command"
-import { Console, Effect } from "effect"
+import { Console, Effect, Schedule } from "effect"
 import { NetworkSubgraph } from "../services/network/NetworkSubgraph.js"
 import { QoSSubgraph } from "../services/qos/QoSSubgraph.js"
 import { Display } from "../utils/Display.js"
 
 const HORIZON_VERSION = "1.7.0"
 const TEN_DAYS_IN_SECONDS = 10 * 24 * 60 * 60
+
+const RETRY_COUNT = 3
+const RETRY_BASE_DELAY_MS = 500
 
 export const fetchIndexerVersion = (indexer: { url: string }) =>
   Effect.tryPromise({
@@ -17,7 +20,13 @@ export const fetchIndexerVersion = (indexer: { url: string }) =>
       return await res.text()
     },
     catch: (error) => new Error(String(error))
-  })
+  }).pipe(
+    Effect.retry(
+      Schedule.exponential(RETRY_BASE_DELAY_MS).pipe(
+        Schedule.compose(Schedule.recurs(RETRY_COUNT))
+      )
+    )
+  )
 
 export const migration = Command.make(
   "migration",
