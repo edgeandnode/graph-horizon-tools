@@ -21,6 +21,7 @@ export type IndexerDailyDataResponse = {
 }
 
 type QoSDataSource = {
+  isConfigured: () => boolean
   getIndexerDailyData: (dayStartGt: number) => Effect.Effect<IndexerDailyDataResponse, QoSSubgraphError>
 }
 
@@ -38,12 +39,21 @@ export const QoSSubgraphLive = Layer.effect(
   QoSSubgraph,
   Effect.gen(function*() {
     const config = yield* ConfigService
+    const qosSubgraphUrl = config.qosSubgraphUrl
 
     const query = <T>(queryStr: string, variables?: Record<string, unknown>) =>
       Effect.gen(function*() {
+        if (!qosSubgraphUrl) {
+          return yield* Effect.fail(
+            new QoSSubgraphError({
+              message: "QoS subgraph URL not configured"
+            })
+          )
+        }
+
         const response = yield* Effect.tryPromise({
           try: () =>
-            fetch(config.qosSubgraphUrl, {
+            fetch(qosSubgraphUrl, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -105,6 +115,8 @@ export const QoSSubgraphLive = Layer.effect(
         return data.data
       })
 
+    const isConfigured = () => qosSubgraphUrl !== undefined
+
     const getIndexerDailyData = (dayStartGt: number) =>
       Effect.gen(function*() {
         const queryData = yield* QoSSubgraph.loadQuery("IndexerDailyData")
@@ -120,6 +132,7 @@ export const QoSSubgraphLive = Layer.effect(
       })
 
     return QoSSubgraph.of({
+      isConfigured,
       getIndexerDailyData
     })
   })

@@ -160,3 +160,7 @@ function bigintToString(value: bigint, token: boolean = false): string {
     `${ethers.formatEther(value)} GRT` :
     value.toString()).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
 }
+
+export function blue(text: string): string {
+  return Display.colorize(text, "blue")
+}

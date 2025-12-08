@@ -14,12 +14,7 @@ export const AppConfig = Schema.Struct({
       examples: ["https://api.thegraph.com/subgraphs/name/..."]
     })
   ),
-  qosSubgraphUrl: Schema.NonEmptyString.pipe(
-    Schema.annotations({
-      description: "The Graph QoS subgraph endpoint URL for query volume data",
-      examples: ["https://api.thegraph.com/subgraphs/name/..."]
-    })
-  ),
+  qosSubgraphUrl: Schema.optional(Schema.NonEmptyString),
   studioApiKey: Schema.NonEmptyString.pipe(
     Schema.annotations({
       description: "The Graph Studio API key",
@@ -38,7 +33,10 @@ export type AppConfig = Schema.Schema.Type<typeof AppConfig>
 export const loadConfig = Config.all({
   rpcUrl: Config.string("RPC_URL"),
   subgraphUrl: Config.string("SUBGRAPH_URL"),
-  qosSubgraphUrl: Config.string("QOS_SUBGRAPH_URL"),
+  qosSubgraphUrl: Config.string("QOS_SUBGRAPH_URL").pipe(
+    Config.map((s) => s || undefined),
+    Config.withDefault(undefined)
+  ),
   studioApiKey: Config.string("STUDIO_API_KEY"),
   gatewayPayer: Config.string("GATEWAY_PAYER")
 })
