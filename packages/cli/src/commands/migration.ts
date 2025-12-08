@@ -1,4 +1,5 @@
 import * as Command from "@effect/cli/Command"
+import * as Options from "@effect/cli/Options"
 import { Console, Effect, Schedule } from "effect"
 import { NetworkSubgraph } from "../services/network/NetworkSubgraph.js"
 import { QoSSubgraph } from "../services/qos/QoSSubgraph.js"
@@ -28,10 +29,14 @@ export const fetchIndexerVersion = (indexer: { url: string }) =>
     )
   )
 
+const migratedOnly = Options.boolean("migrated-only").pipe(
+  Options.withDescription("Only show indexers that have migrated to Horizon")
+)
+
 export const migration = Command.make(
   "migration",
-  {},
-  () =>
+  { migratedOnly },
+  ({ migratedOnly }) =>
     Effect.gen(function*() {
       yield* Display.header("Graph Horizon - Migration Status")
 
@@ -191,15 +196,22 @@ export const migration = Command.make(
 
       yield* Display.section("Active indexers details")
 
+      // Filter indexers if --migrated-only flag is set (version >= 1.7.0)
+      const indexersToDisplay = migratedOnly
+        ? activeIndexersWithVersions.filter((indexer) =>
+            indexer.version !== null && compareVersions(indexer.version, HORIZON_VERSION) >= 0
+          )
+        : activeIndexersWithVersions
+
       // Group indexers by version
-      const indexersByVersion = activeIndexersWithVersions.reduce((acc, indexer) => {
+      const indexersByVersion = indexersToDisplay.reduce((acc, indexer) => {
         const version = indexer.version ?? "N/A"
         if (!acc[version]) {
           acc[version] = []
         }
         acc[version].push(indexer)
         return acc
-      }, {} as Record<string, typeof activeIndexersWithVersions>)
+      }, {} as Record<string, typeof indexersToDisplay>)
 
       // Sort versions (N/A last, then descending version order)
       const sortedVersions = Object.keys(indexersByVersion).sort((a, b) => {
