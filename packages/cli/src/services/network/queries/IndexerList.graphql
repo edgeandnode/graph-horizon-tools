@@ -2,6 +2,7 @@ query IndexerList {
     indexers(first: 1000) {
         id
         url
+        stakedTokens
         allocations {
             createdAt
         }
@@ -10,5 +11,6 @@ query IndexerList {
         indexer {
             id
         }
+        tokensProvisioned
     }
 }

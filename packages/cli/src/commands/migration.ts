@@ -2,7 +2,7 @@ import * as Command from "@effect/cli/Command"
 import { Console, Effect, Schedule } from "effect"
 import { NetworkSubgraph } from "../services/network/NetworkSubgraph.js"
 import { QoSSubgraph } from "../services/qos/QoSSubgraph.js"
-import { Display, blue } from "../utils/Display.js"
+import { Display, blue, green } from "../utils/Display.js"
 
 const HORIZON_VERSION = "1.7.0"
 const TEN_DAYS_IN_SECONDS = 10 * 24 * 60 * 60
@@ -37,6 +37,14 @@ export const migration = Command.make(
 
       const network = yield* NetworkSubgraph
       const indexerListResult = yield* network.getIndexerList()
+
+      // Build map of provisioned tokens per indexer
+      const provisionedByIndexer = new Map<string, bigint>()
+      for (const provision of indexerListResult.provisions) {
+        const indexerId = provision.indexer.id.toLowerCase()
+        const current = provisionedByIndexer.get(indexerId) ?? BigInt(0)
+        provisionedByIndexer.set(indexerId, current + BigInt(provision.tokensProvisioned))
+      }
 
       const indexerCount = indexerListResult.indexers.length
       const indexerWithAllocationsCount = indexerListResult.indexers.filter((indexer) =>
@@ -148,36 +156,38 @@ export const migration = Command.make(
         }
       }
 
-      // Display query volume coverage section
-      yield* Display.section("Query volume coverage (last 10 days)")
+      // Calculate total network stake metrics
+      const totalStaked = indexerListResult.indexers.reduce((acc, indexer) => {
+        return acc + BigInt(indexer.stakedTokens ?? 0)
+      }, BigInt(0))
+      const totalProvisioned = indexerListResult.provisions.reduce((acc, provision) => {
+        return acc + BigInt(provision.tokensProvisioned)
+      }, BigInt(0))
+      const stakePct = totalStaked > 0
+        ? ((Number(totalProvisioned) / Number(totalStaked)) * 100).toFixed(2)
+        : "N/A"
+      const stakeDisplay = totalStaked > 0
+        ? `${stakePct}% (${formatGRT(totalProvisioned)} / ${formatGRT(totalStaked)})`
+        : "N/A"
 
+      // Calculate query volume coverage
+      let queryVolumeDisplay = "N/A (QOS_SUBGRAPH_URL not configured)"
       if (qosConfigured && volumeByDay.size > 0) {
-        const sortedDays = Array.from(volumeByDay.keys()).sort((a, b) => Number(a) - Number(b))
         let totalQueries = BigInt(0)
         let horizonQueries = BigInt(0)
-
-        for (const day of sortedDays) {
-          const dayData = volumeByDay.get(day)!
+        for (const dayData of volumeByDay.values()) {
           totalQueries += dayData.total
           horizonQueries += dayData.horizon
-
-          const date = new Date(Number(day) * 1000).toISOString().split("T")[0]
-          const percentage = dayData.total > 0
-            ? ((Number(dayData.horizon) / Number(dayData.total)) * 100).toFixed(2)
-            : "0.00"
-          yield* Display.keyValue(
-            `  ${date}`,
-            `${percentage}% (${formatNumber(dayData.horizon)} / ${formatNumber(dayData.total)})`
-          )
         }
-
-        const overallPercentage = totalQueries > 0
+        const queryPct = totalQueries > 0
           ? ((Number(horizonQueries) / Number(totalQueries)) * 100).toFixed(2)
           : "0.00"
-        yield* Display.keyValue("Overall", `${overallPercentage}% horizon coverage`)
-      } else {
-        yield* Console.log("  QOS_SUBGRAPH_URL not configured")
+        queryVolumeDisplay = `${queryPct}% (${formatNumber(horizonQueries)} / ${formatNumber(totalQueries)})`
       }
+
+      yield* Display.section("Horizon coverage")
+      yield* Display.keyValue("Stake provisioned", stakeDisplay)
+      yield* Display.keyValue("Query volume (10d)", queryVolumeDisplay)
 
       yield* Display.section("Active indexers details")
 
@@ -198,7 +208,7 @@ export const migration = Command.make(
         return compareVersions(b, a) // descending order
       })
 
-      // Display grouped by version with query volume
+      // Display grouped by version with query volume and stake
       for (const version of sortedVersions) {
         const indexers = indexersByVersion[version]
 
@@ -206,24 +216,43 @@ export const migration = Command.make(
         const versionVolume = indexers.reduce((acc, indexer) => {
           return acc + (volumeByIndexer.get(indexer.id.toLowerCase()) ?? BigInt(0))
         }, BigInt(0))
-        const versionPercentage = qosConfigured && grandTotalQueries > 0
+        const versionQueryPct = qosConfigured && grandTotalQueries > 0
           ? `${((Number(versionVolume) / Number(grandTotalQueries)) * 100).toFixed(2)}%`
+          : "N/A"
+
+        // Calculate total stake percentage for this version
+        const versionStaked = indexers.reduce((acc, indexer) => {
+          return acc + BigInt(indexer.stakedTokens ?? 0)
+        }, BigInt(0))
+        const versionProvisioned = indexers.reduce((acc, indexer) => {
+          return acc + (provisionedByIndexer.get(indexer.id.toLowerCase()) ?? BigInt(0))
+        }, BigInt(0))
+        const versionStakePct = versionStaked > 0
+          ? `${((Number(versionProvisioned) / Number(versionStaked)) * 100).toFixed(2)}%`
           : "N/A"
 
         yield* Console.log(
           `\n  Version ${version} (${indexers.length} indexer${
             indexers.length === 1 ? "" : "s"
-          }) - ${blue(versionPercentage)}:`
+          }) - ${blue(versionQueryPct)}  ${green(versionStakePct)}:`
         )
 
         for (const indexer of indexers) {
           const indexerVolume = volumeByIndexer.get(indexer.id.toLowerCase()) ?? BigInt(0)
-          const volumePercentage = qosConfigured && grandTotalQueries > 0
+          const queryPct = qosConfigured && grandTotalQueries > 0
             ? `${((Number(indexerVolume) / Number(grandTotalQueries)) * 100).toFixed(2)}%`
             : "N/A"
-          yield* Display.tripleString(
+
+          const staked = BigInt(indexer.stakedTokens ?? 0)
+          const provisioned = provisionedByIndexer.get(indexer.id.toLowerCase()) ?? BigInt(0)
+          const stakePct = staked > 0
+            ? `${((Number(provisioned) / Number(staked)) * 100).toFixed(2)}%`
+            : "N/A"
+
+          yield* Display.quadString(
             indexer.id,
-            volumePercentage,
+            queryPct,
+            stakePct,
             indexer.url ?? "N/A"
           )
         }
@@ -242,6 +271,18 @@ export const migration = Command.make(
 
 function formatNumber(n: bigint): string {
   return n.toLocaleString()
+}
+
+function formatGRT(n: bigint): string {
+  const grt = Number(n) / 1e18
+  if (grt >= 1_000_000_000) {
+    return `${(grt / 1_000_000_000).toFixed(2)}B GRT`
+  } else if (grt >= 1_000_000) {
+    return `${(grt / 1_000_000).toFixed(2)}M GRT`
+  } else if (grt >= 1_000) {
+    return `${(grt / 1_000).toFixed(2)}K GRT`
+  }
+  return `${grt.toFixed(2)} GRT`
 }
 
 function parseVersion(v: string) {
