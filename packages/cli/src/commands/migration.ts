@@ -261,10 +261,11 @@ export const migration = Command.make(
             ? `${((Number(provisioned) / Number(staked)) * 100).toFixed(2)}%`
             : "N/A"
 
-          yield* Display.quadString(
+          yield* Display.fiveString(
             indexer.id,
             queryPct,
             stakePct,
+            formatGRT(staked),
             indexer.url ?? "N/A"
           )
         }
