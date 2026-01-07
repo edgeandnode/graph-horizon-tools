@@ -47,6 +47,10 @@ echo "$BATCH_ALLOCS" | jq -c '.[]' | while read -r alloc; do
         "$DEPLOYMENT" \
         "$ALLOC_ID" \
         "$AMOUNT" \
+        0x0 \
+        true \
+        0 \
+        0x0 \
         --network "$NETWORK" \
         --source "$SOURCE" \
         --reason "$REASON" \
