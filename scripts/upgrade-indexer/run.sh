@@ -3,6 +3,8 @@
 
 set -e
 
+trap 'say "Migration failed my guy!"' ERR
+
 # Configuration
 BATCH_SIZE="${BATCH_SIZE:-10}"
 RUNS="${RUNS:-1}"
@@ -46,3 +48,4 @@ for ((i=1; i<=RUNS; i++)); do
 done
 
 echo -e "${GREEN}=== All runs completed in $((SECONDS - TOTAL_START))s ===${NC}"
+say "Migration finished my guy!"

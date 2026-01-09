@@ -38,3 +38,9 @@ kubectl cp shell-0:/allocations.json allos-snapshot-current.json && \
 # Just do it
 BATCH_SIZE=10 RUNS=3 ./run.sh
 ```
+
+### Other useful commands
+```bash
+graph indexer actions get --network arbitrum-one --source "horizon-bulk-reallocate" -w 24 --status failed
+graph indexer allocations close --network arbitrum-one 0xf052f1d744a625ccc49e9df1359dc92bbfb5cf04 0x0 --force
+```

@@ -95,6 +95,8 @@ fi
 
 if [[ "$BOTH_COUNT" -ne 0 ]]; then
     echo -e "${RED}SANITY CHECK FAILED: Deployments with both allos ($BOTH_COUNT) != 0${NC}"
+    echo -e "${RED}Problematic deployments:${NC}"
+    jq -r '[group_by(.subgraphDeployment)[] | select((map(select(.isLegacy == "Yes")) | length > 0) and (map(select(.isLegacy == "No")) | length > 0)) | {deployment: .[0].subgraphDeployment, legacy: [.[] | select(.isLegacy == "Yes") | .id], horizon: [.[] | select(.isLegacy == "No") | .id]}] | .[] | "  \(.deployment)\n    Legacy:  \(.legacy | join(", "))\n    Horizon: \(.horizon | join(", "))"' "$AFTER"
     FAILED=1
 fi
 
