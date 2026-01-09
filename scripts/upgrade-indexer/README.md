@@ -46,6 +46,13 @@ kubectl exec -ti shell-0 -- bash -s < fetch.sh
 kubectl exec -ti shell-0 -- env DRY_RUN=false bash -s < close-duplicates.sh
 ```
 
+### Create lost allocations
+
+```bash
+kubectl cp allos-snapshot-before.json shell-0:/allos-snapshot-before.json
+kubectl exec -ti shell-0 -- env AFTER=allocations.json bash -s < create-lost.sh
+```
+
 ### Other useful commands
 ```bash
 graph indexer actions get --network arbitrum-one --source "horizon-bulk-reallocate" -w 24 --status failed

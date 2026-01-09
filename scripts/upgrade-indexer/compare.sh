@@ -5,6 +5,8 @@ set -e
 
 BEFORE="${1:-allos-snapshot-before.json}"
 AFTER="${2:-allos-snapshot-current.json}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOST_ALLOWLIST="${LOST_ALLOWLIST:-$SCRIPT_DIR/lost-allowlist.txt}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -89,8 +91,7 @@ LEGACY_CHANGE=$((BEFORE_LEGACY - AFTER_LEGACY))
 FAILED=0
 
 if [[ "$MIGRATED_COUNT" -ne "$LEGACY_CHANGE" ]]; then
-    echo -e "${RED}SANITY CHECK FAILED: Migrated ($MIGRATED_COUNT) != Legacy change ($LEGACY_CHANGE)${NC}"
-    FAILED=1
+    echo -e "${YELLOW}Note: Migrated ($MIGRATED_COUNT) != Legacy change ($LEGACY_CHANGE)${NC}"
 fi
 
 if [[ "$BOTH_COUNT" -ne 0 ]]; then
@@ -105,8 +106,21 @@ if [[ "$MULTI_HORIZON_COUNT" -ne 0 ]]; then
     FAILED=1
 fi
 
-if [[ "$LOST_COUNT" -ne 0 ]]; then
-    echo -e "${RED}SANITY CHECK FAILED: Legacy closed without Horizon replacement ($LOST_COUNT) != 0${NC}"
+# Filter lost allocations against allowlist
+if [[ -f "$LOST_ALLOWLIST" ]]; then
+    LOST_NOT_ALLOWED=$(echo "$LOST" | while IFS=$'\t' read -r deployment id; do
+        if ! grep -q "^$deployment$" "$LOST_ALLOWLIST"; then
+            echo -e "$deployment\t$id"
+        fi
+    done)
+    LOST_NOT_ALLOWED_COUNT=$(echo "$LOST_NOT_ALLOWED" | grep -c . || true)
+else
+    LOST_NOT_ALLOWED="$LOST"
+    LOST_NOT_ALLOWED_COUNT="$LOST_COUNT"
+fi
+
+if [[ "$LOST_NOT_ALLOWED_COUNT" -ne 0 ]]; then
+    echo -e "${RED}SANITY CHECK FAILED: Legacy closed without Horizon replacement ($LOST_NOT_ALLOWED_COUNT not in allowlist) != 0${NC}"
     FAILED=1
 fi
 

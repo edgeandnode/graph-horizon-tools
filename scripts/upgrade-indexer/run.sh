@@ -45,6 +45,7 @@ for ((i=1; i<=RUNS; i++)); do
     echo ""
     echo -e "Run $i completed in $((SECONDS - RUN_START))s"
     echo ""
+    say "Run $i completed"
 done
 
 echo -e "${GREEN}=== All runs completed in $((SECONDS - TOTAL_START))s ===${NC}"

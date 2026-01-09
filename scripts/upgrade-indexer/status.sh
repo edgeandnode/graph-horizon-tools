@@ -33,11 +33,3 @@ echo "  Approved: $(get_count approved)"
 echo "  Pending:  $(get_count pending)"
 echo "  Success:  $(get_count success)"
 echo "  Failed:   $(get_count failed)"
-
-# Show any failures
-FAILED_COUNT=$(get_count failed)
-if [[ "$FAILED_COUNT" -gt 0 ]]; then
-    echo ""
-    echo -e "${RED}Failed actions:${NC}"
-    graph indexer actions get --status failed --source "$SOURCE" --network "$NETWORK" --fields id,deploymentID,failureReason
-fi
