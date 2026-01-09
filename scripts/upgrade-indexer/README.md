@@ -39,6 +39,13 @@ kubectl cp shell-0:/allocations.json allos-snapshot-current.json && \
 BATCH_SIZE=10 RUNS=3 ./run.sh
 ```
 
+### Close duplicate legacy allocations (leave one open)
+
+```bash
+kubectl exec -ti shell-0 -- bash -s < fetch.sh
+kubectl exec -ti shell-0 -- env DRY_RUN=false bash -s < close-duplicates.sh
+```
+
 ### Other useful commands
 ```bash
 graph indexer actions get --network arbitrum-one --source "horizon-bulk-reallocate" -w 24 --status failed
