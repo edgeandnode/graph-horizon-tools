@@ -107,13 +107,16 @@ if [[ "$MULTI_HORIZON_COUNT" -ne 0 ]]; then
 fi
 
 # Filter lost allocations against allowlist
-if [[ -f "$LOST_ALLOWLIST" ]]; then
+if [[ -f "$LOST_ALLOWLIST" && -n "$LOST" && "$LOST_COUNT" -gt 0 ]]; then
     LOST_NOT_ALLOWED=$(echo "$LOST" | while IFS=$'\t' read -r deployment id; do
         if ! grep -q "^$deployment$" "$LOST_ALLOWLIST"; then
             echo -e "$deployment\t$id"
         fi
     done)
     LOST_NOT_ALLOWED_COUNT=$(echo "$LOST_NOT_ALLOWED" | grep -c . || true)
+elif [[ -f "$LOST_ALLOWLIST" ]]; then
+    LOST_NOT_ALLOWED=""
+    LOST_NOT_ALLOWED_COUNT=0
 else
     LOST_NOT_ALLOWED="$LOST"
     LOST_NOT_ALLOWED_COUNT="$LOST_COUNT"
