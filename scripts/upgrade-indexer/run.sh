@@ -40,6 +40,7 @@ for ((i=1; i<=RUNS; i++)); do
     # Fetch current state and compare
     kubectl exec -ti "$POD" -- bash -s < "$SCRIPT_DIR/fetch.sh"
     kubectl cp "$POD":/allocations.json "$SCRIPT_DIR/allos-snapshot-current.json"
+    kubectl cp "$POD":/queued-deployments.log "$SCRIPT_DIR/queued-deployments.log" 2>/dev/null || true
     "$SCRIPT_DIR/compare.sh"
 
     echo ""

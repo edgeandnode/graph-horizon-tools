@@ -7,6 +7,8 @@ BEFORE="${1:-allos-snapshot-before.json}"
 AFTER="${2:-allos-snapshot-current.json}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOST_ALLOWLIST="${LOST_ALLOWLIST:-$SCRIPT_DIR/lost-allowlist.txt}"
+QUEUED_DEPLOYMENTS_LOG="${QUEUED_DEPLOYMENTS_LOG:-$SCRIPT_DIR/queued-deployments.log}"
+POD="${POD:-shell-0}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -17,6 +19,7 @@ NC='\033[0m' # No Color
 echo -e "${YELLOW}=== Allocation Snapshot Comparison ===${NC}"
 echo "Before: $BEFORE"
 echo "After:  $AFTER"
+echo "Pod:    $POD"
 echo ""
 
 # Check files exist
@@ -125,6 +128,45 @@ fi
 if [[ "$LOST_NOT_ALLOWED_COUNT" -ne 0 ]]; then
     echo -e "${RED}SANITY CHECK FAILED: Legacy closed without Horizon replacement ($LOST_NOT_ALLOWED_COUNT not in allowlist) != 0${NC}"
     FAILED=1
+fi
+
+# Check that queued deployments from this batch are active
+echo ""
+echo -e "${YELLOW}=== Deployment Health Check ===${NC}"
+
+if [[ -f "$QUEUED_DEPLOYMENTS_LOG" ]]; then
+    QUEUED_DEPLOYMENTS=$(cat "$QUEUED_DEPLOYMENTS_LOG")
+    QUEUED_COUNT=$(grep -c . "$QUEUED_DEPLOYMENTS_LOG" || true)
+else
+    QUEUED_DEPLOYMENTS=""
+    QUEUED_COUNT=0
+fi
+
+if [[ -n "$QUEUED_DEPLOYMENTS" && "$QUEUED_COUNT" -gt 0 ]]; then
+    echo "Checking $QUEUED_COUNT deployments from this batch..."
+
+    # Check all deployments in a single kubectl exec
+    INACTIVE_DEPLOYMENTS=$(kubectl exec "$POD" -- bash -c '
+        for dep in "$@"; do
+            graphman info "$dep" 2>/dev/null | grep -q "Active.*true" || echo "$dep"
+        done
+    ' _ $QUEUED_DEPLOYMENTS)
+
+    INACTIVE_COUNT=$(echo "$INACTIVE_DEPLOYMENTS" | grep -c . || true)
+else
+    echo "No queued deployments to check"
+    INACTIVE_DEPLOYMENTS=""
+    INACTIVE_COUNT=0
+fi
+
+if [[ "$INACTIVE_COUNT" -gt 0 ]]; then
+    echo -e "${RED}SANITY CHECK FAILED: $INACTIVE_COUNT deployments from this batch are not active:${NC}"
+    echo "$INACTIVE_DEPLOYMENTS" | while IFS= read -r dep; do
+        [[ -n "$dep" ]] && echo "  $dep"
+    done
+    FAILED=1
+elif [[ "$QUEUED_COUNT" -gt 0 ]]; then
+    echo -e "${GREEN}All deployments from this batch are active${NC}"
 fi
 
 if [[ "$FAILED" -eq 1 ]]; then
